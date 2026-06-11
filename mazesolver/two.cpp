@@ -1,0 +1,99 @@
+#include "one.h"
+#include "two.h"
+#include <Arduino.h>
+
+// Motor Control Functions
+void motor1Forward(int speed) {
+
+  digitalWrite(M1_IN1, LOW);
+  analogWrite(M1_IN2, speed);
+}
+void motor1Reverse(int speed) {
+  digitalWrite(M1_IN1, HIGH);
+  analogWrite(M1_IN2, speed);
+}
+void motor1Stop() {
+  digitalWrite(M1_IN1, LOW);
+  analogWrite(M1_IN2, 0);
+}
+void motor2Forward(int speed) {
+  digitalWrite(M2_IN1, LOW);
+  analogWrite(M2_IN2, speed);
+}
+void motor2Reverse(int speed) {
+  digitalWrite(M2_IN1, HIGH);
+  analogWrite(M2_IN2, speed);
+}
+void motor2Stop() {
+  digitalWrite(M2_IN1, LOW);
+  analogWrite(M2_IN2, 0);
+}
+//wall detection functions
+bool isWallLeft(){
+  return true;
+}
+bool isWallRight(){
+  return true;
+}
+bool isWallFront(){
+  return false;
+}
+void turn(float angleDeg) {
+  float Kp = 2.0;
+  float Ki = 0.0;
+  float Kd = 0.12;
+  float integral = 0.0f;
+  float previousError = 0.0f;
+  unsigned long lastTime = millis();
+
+  float startYaw = getYaw(); // Will return 0 to 360
+  delay(15);
+
+  // A positive angleDeg turns right, negative turns left
+  float targetYaw = startYaw + angleDeg;
+
+  // NEW: Normalize target strictly to 0 to 360
+  while (targetYaw >= 360.0f) targetYaw -= 360.0f;
+  while (targetYaw < 0.0f) targetYaw += 360.0f;
+
+  while (true) {
+    float turnThreshold = 5;
+    float currentYaw = getYaw(); 
+    float error = targetYaw - currentYaw;
+
+    // It guarantees the error is always the shortest path (-180 to +180)
+    if (error > 180.0f) error -= 360.0f;
+    else if (error < -180.0f) error += 360.0f;
+
+    // Break condition
+    if (abs(error) <= turnThreshold) break;
+
+    unsigned long now = millis();
+    float dt = (now - lastTime) / 1000.0f;
+    lastTime = now;
+    if (dt < 0.001f) dt = 0.001f;
+
+    integral += error * dt;
+    integral = constrain(integral, -50.0f, 50.0f);
+
+    float derivative = (error - previousError) / dt;
+    previousError = error;
+
+    float output = Kp * error + Ki * integral + Kd * derivative;
+
+    int pwm = constrain(abs(output), 60, 140);
+
+    if (output > 0) {
+      motor1Reverse(pwm);   
+      motor2Forward(pwm);  
+    } else {
+      motor1Forward(pwm);  
+      motor2Reverse(pwm);   
+    }
+
+    delay(5);
+  }
+
+  motor1Stop();
+  motor2Stop();
+}

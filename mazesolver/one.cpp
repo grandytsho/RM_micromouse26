@@ -27,7 +27,6 @@ const uint8_t M1_IN2 = 3;  //direction
 const uint8_t M2_IN1 = 24; //PWM
 const uint8_t M2_IN2 = 25; //PWM
 
-// 3. Notice there is NO semicolon at the end of this line!
 #define AT_COMMAND_LINE 4
 
 constexpr double MOTOR_BIAS = (127.0+15.0)/127.0; 
@@ -76,4 +75,11 @@ void inithardware(){
   delay(1000); 
   Serial.println("testing"); 
   bno.setExtCrystalUse(true);
+  BT.print("setupdone");
+}
+
+float getYaw(){
+  sensors_event_t event; 
+  bno.getEvent(&event); 
+  return event.orientation.x;
 }

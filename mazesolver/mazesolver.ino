@@ -13,14 +13,31 @@ void setup() {
 }
 
 void loop() {
-  Serial.print("Sensors: ");
-  // Loop through all 6 sensors
-  for (int i = 0; i < 6; i++) {
-    // Assuming these are digital IR sensors. Use analogRead() if they are analog.
-    int reading = digitalRead(sensorPins[i]); 
-    Serial.print(reading);
-    Serial.print(" | ");
+  leftWallFollow();
+}
+
+void leftWallFollow() { 
+ if (!isWallLeft()) {// turn left
+    turn(-90.0f);
+    
+    delay(5);  // small delay to settle
+    //centerUntil25cm();
   }
-  Serial.println();
-  delay(200);
+  else if (!isWallFront()) {//move forward 
+    // BT.println("Going front");
+   // centerUntil25cm();
+  }
+  else if (!isWallRight()) {//turn right
+        // BT.println("Going right");
+    turn(90.0f);
+    delay(5);
+    //centerUntil25cm();
+  }
+  else {
+        // BT.println("Going around");
+    turn(180.0f);
+    delay(5);
+  }
+  //bool a = alignToNearest90();
+  delay(5);
 }
