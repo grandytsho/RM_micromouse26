@@ -64,8 +64,8 @@ void inithardware(){
   pinMode(M2_IN1, OUTPUT);
   pinMode(M2_IN2, OUTPUT);
 
-  // attachInterrupt(digitalPinToInterrupt(EC_1A), isrLeftEncoder, CHANGE);
-  // attachInterrupt(digitalPinToInterrupt(EC_2A), isrRightEncoder, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(EC_1A), isrLeftEncoder, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(EC_2A), isrRightEncoder, CHANGE);
 
   if(!bno.begin()){
       Serial.println("Couldnt intialise BNO55");
@@ -76,6 +76,21 @@ void inithardware(){
   Serial.println("testing"); 
   bno.setExtCrystalUse(true);
   BT.print("setupdone");
+}
+void isrLeftEncoder() {
+    if (digitalRead(EC_1A) == digitalRead(EC_1B)) {
+        leftEncoderTicks--;
+    } else {
+        leftEncoderTicks++;
+    }
+}
+
+void isrRightEncoder() {
+    if (digitalRead(EC_2A) != digitalRead(EC_2B)) {
+        rightEncoderTicks--;
+    } else {
+        rightEncoderTicks++;
+    }
 }
 
 float getYaw(){

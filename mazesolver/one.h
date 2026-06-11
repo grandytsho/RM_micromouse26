@@ -19,7 +19,9 @@ extern const uint8_t EC_2B ;
 extern const uint8_t M1_IN1 ;
 extern const uint8_t M1_IN2 ;  
 extern const uint8_t M2_IN1 ; 
-extern const uint8_t M2_IN2 ; 
+extern const uint8_t M2_IN2 ;
+extern volatile long leftEncoderTicks ;
+extern volatile long rightEncoderTicks;
 
 
 #endif
