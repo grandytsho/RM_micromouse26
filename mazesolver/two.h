@@ -4,8 +4,7 @@
 #include "two.h"
 #include <Arduino.h>
 
-void motor1Stop();
-void motor2Stop();
+void motorStop();
 void motor1Forward();
 void motor2Forward();
 void motor1Reverse();

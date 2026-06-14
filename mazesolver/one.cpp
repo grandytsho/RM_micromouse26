@@ -29,13 +29,29 @@ const uint8_t M2_IN2 = 25; //PWM
 
 #define AT_COMMAND_LINE 4
 
-constexpr double MOTOR_BIAS = (127.0+15.0)/127.0; 
+const double MOTOR_BIAS = (127.0+15.0)/127.0; 
 
 volatile long leftEncoderTicks = 0;
 volatile long rightEncoderTicks = 0;
 
 // 4. You MUST create the bno object here so bno.begin() works later!
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1);
+
+void isrLeftEncoder() {
+    if (digitalRead(EC_1A) == digitalRead(EC_1B)) {
+        leftEncoderTicks--;
+    } else {
+        leftEncoderTicks++;
+    }
+}
+
+void isrRightEncoder() {
+    if (digitalRead(EC_2A) != digitalRead(EC_2B)) {
+        rightEncoderTicks--;
+    } else {
+        rightEncoderTicks++;
+    }
+}
 
 // Your hardware setup function
 void inithardware(){
@@ -46,6 +62,7 @@ void inithardware(){
 
   // Initialize all pins using a loop
   for (int i = 0; i < NUM_SENSORS; i++) {
+    if(i==0||i==5)continue;
     pinMode(emitterPins[i], OUTPUT);
     digitalWrite(emitterPins[i], HIGH);  // Keep all IR transmitters ON
     pinMode(sensorPins[i], INPUT); 
@@ -77,24 +94,21 @@ void inithardware(){
   bno.setExtCrystalUse(true);
   BT.print("setupdone");
 }
-void isrLeftEncoder() {
-    if (digitalRead(EC_1A) == digitalRead(EC_1B)) {
-        leftEncoderTicks--;
-    } else {
-        leftEncoderTicks++;
-    }
-}
-
-void isrRightEncoder() {
-    if (digitalRead(EC_2A) != digitalRead(EC_2B)) {
-        rightEncoderTicks--;
-    } else {
-        rightEncoderTicks++;
-    }
-}
 
 float getYaw(){
   sensors_event_t event; 
   bno.getEvent(&event); 
   return event.orientation.x;
+}
+
+float getRight(){
+  int raw = analogRead(sensorPins[1]);
+  float out = (2494.3112 / (raw + 31.6584)) - 0.4117;
+  return out;
+}
+
+float getLeft(){
+  int raw = analogRead(sensorPins[3]);
+  float out = (2850.7585 / (raw + 14.7003)) - 2.6599;
+  return out;
 }

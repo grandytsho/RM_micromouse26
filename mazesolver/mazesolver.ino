@@ -6,14 +6,19 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 
-
 void setup() {
   inithardware();
-
+  BT.print("available");
 }
 
 void loop() {
-  leftWallFollow();
+  if (BT.available() > 0){
+    char incomingChar = BT.read();
+    BT.print(incomingChar);
+    if(incomingChar=='T'){
+      turn(90);
+    }
+  }
 }
 
 void leftWallFollow() { 

@@ -10,11 +10,7 @@ void motor1Forward(int speed) {
 }
 void motor1Reverse(int speed) {
   digitalWrite(M1_IN1, HIGH);
-  analogWrite(M1_IN2, speed);
-}
-void motor1Stop() {
-  digitalWrite(M1_IN1, LOW);
-  analogWrite(M1_IN2, 0);
+  analogWrite(M1_IN2, speed*MOTOR_BIAS);
 }
 void motor2Forward(int speed) {
   digitalWrite(M2_IN1, LOW);
@@ -24,9 +20,17 @@ void motor2Reverse(int speed) {
   digitalWrite(M2_IN1, HIGH);
   analogWrite(M2_IN2, speed);
 }
-void motor2Stop() {
+void motorStop() {
+  digitalWrite(M2_IN1, HIGH);
+  analogWrite(M2_IN2, 255);
+  digitalWrite(M1_IN1, HIGH);
+  analogWrite(M1_IN2, 255);
+  delay(150);
+  digitalWrite(M1_IN1, LOW);
+  analogWrite(M1_IN2, 0);
   digitalWrite(M2_IN1, LOW);
   analogWrite(M2_IN2, 0);
+
 }
 //wall detection functions
 bool isWallLeft(){
@@ -39,9 +43,10 @@ bool isWallFront(){
   return false;
 }
 void turn(float angleDeg) {
-  float Kp = 2.0;
+  BT.print("turning")
+  float Kp = 1.0;
   float Ki = 0.0;
-  float Kd = 0.12;
+  float Kd = 0.0;
   float integral = 0.0f;
   float previousError = 0.0f;
   unsigned long lastTime = millis();
@@ -94,6 +99,5 @@ void turn(float angleDeg) {
     delay(5);
   }
 
-  motor1Stop();
-  motor2Stop();
+  motorStop();
 }

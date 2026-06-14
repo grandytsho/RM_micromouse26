@@ -11,6 +11,9 @@
 
 void inithardware();
 float getYaw();
+float getRight();
+float getLeft();
+
 extern const int sensorPins[];
 extern const uint8_t EC_1A ; 
 extern const uint8_t EC_1B ;
@@ -22,6 +25,8 @@ extern const uint8_t M2_IN1 ;
 extern const uint8_t M2_IN2 ;
 extern volatile long leftEncoderTicks ;
 extern volatile long rightEncoderTicks;
+extern const double MOTOR_BIAS; 
+extern HardwareSerial &BT;
 
 
 #endif
