@@ -13,6 +13,7 @@ void inithardware();
 float getYaw();
 float getRight();
 float getLeft();
+float getCorrectedReading(); 
 
 extern const int sensorPins[];
 extern const uint8_t EC_1A ; 

@@ -112,3 +112,11 @@ float getLeft(){
   float out = (2850.7585 / (raw + 14.7003)) - 2.6599;
   return out;
 }
+
+float getCorrectedReading(int sensorNum){
+  digitalWrite(emitterPins[sensorNum], LOW);
+  float ambient_value = analogRead(sensorPins[sensorNum]); 
+  digitalWrite(emitterPins[sensorNum], HIGH); 
+  float raw_value = analogRead(sensorPins[sensorNum]); 
+  return (raw_value - ambient_value); 
+}

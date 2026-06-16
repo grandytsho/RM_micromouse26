@@ -1,16 +1,25 @@
 #include "one.h"
 #include "two.h"
 #include <Arduino.h>
+float Kp = 1.0;
+float Ki = 0.0;
+float Kd = 0.05;
+int upper = 110;
+int lower = 40; 
 
 // Motor Control Functions
 void motor1Forward(int speed) {
 
   digitalWrite(M1_IN1, LOW);
-  analogWrite(M1_IN2, speed);
+  analogWrite(M1_IN2, speed*MOTOR_BIAS);
 }
 void motor1Reverse(int speed) {
   digitalWrite(M1_IN1, HIGH);
-  analogWrite(M1_IN2, speed*MOTOR_BIAS);
+  // Invert the PWM because IN1 is HIGH
+  int mappedSpeed = 255 - (speed * MOTOR_BIAS);
+  // Prevent negative values if speed * MOTOR_BIAS exceeds 255
+  if (mappedSpeed < 0) mappedSpeed = 0; 
+  analogWrite(M1_IN2, mappedSpeed);
 }
 void motor2Forward(int speed) {
   digitalWrite(M2_IN1, LOW);
@@ -18,7 +27,8 @@ void motor2Forward(int speed) {
 }
 void motor2Reverse(int speed) {
   digitalWrite(M2_IN1, HIGH);
-  analogWrite(M2_IN2, speed);
+  // Invert the PWM because IN1 is HIGH
+  analogWrite(M2_IN2, 255 - speed);
 }
 void motorStop() {
   digitalWrite(M2_IN1, HIGH);
@@ -42,11 +52,13 @@ bool isWallRight(){
 bool isWallFront(){
   return false;
 }
-void turn(float angleDeg) {
-  BT.print("turning")
-  float Kp = 1.0;
-  float Ki = 0.0;
-  float Kd = 0.0;
+void turn(float angleDeg){
+
+  BT.println("turning");
+  BT.print("Kp|");BT.println(Kp);
+  BT.print("Kd|");BT.println(Kd);
+  BT.print("Upper|");BT.println(upper);
+  BT.print("Lower|");BT.println(lower); 
   float integral = 0.0f;
   float previousError = 0.0f;
   unsigned long lastTime = millis();
@@ -62,7 +74,7 @@ void turn(float angleDeg) {
   while (targetYaw < 0.0f) targetYaw += 360.0f;
 
   while (true) {
-    float turnThreshold = 5;
+    float turnThreshold = 0.25;
     float currentYaw = getYaw(); 
     float error = targetYaw - currentYaw;
 
@@ -86,18 +98,18 @@ void turn(float angleDeg) {
 
     float output = Kp * error + Ki * integral + Kd * derivative;
 
-    int pwm = constrain(abs(output), 60, 140);
+    int pwm = constrain(abs(output), lower, upper);
 
     if (output > 0) {
-      motor1Reverse(pwm);   
-      motor2Forward(pwm);  
-    } else {
-      motor1Forward(pwm);  
       motor2Reverse(pwm);   
+      motor1Forward(pwm);  
+    } else {
+      motor2Forward(pwm);  
+      motor1Reverse(pwm);   
     }
 
     delay(5);
   }
 
-  motorStop();
+ motorStop();
 }
