@@ -8,6 +8,7 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include <EEPROM.h>
+#include <Adafruit_BNO08x.h>
 
 
 void inithardware();
@@ -20,8 +21,6 @@ float getLeftDiagonal();
 float getRightDiagonal();
 float getCorrectedReading(int sensorNum);
 float getCorrectedReading();
-void printCalibrationLevel();
-void saveCalibrationToEEPROM();
 
 extern const int sensorPins[];
 extern const uint8_t EC_1A ; 

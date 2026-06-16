@@ -31,7 +31,9 @@ const double MOTOR_BIAS = (127.0+15.0)/127.0;
 volatile long leftEncoderTicks = 0;
 volatile long rightEncoderTicks = 0;
 
-Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28, &Wire1); //bno object
+Adafruit_BNO08x bno08x;
+sh2_SensorValue_t sensorValue; // Struct to hold the complex data reports
+
 void isrLeftEncoder() {
     if (digitalRead(EC_1A) == digitalRead(EC_1B)) {
         leftEncoderTicks--;
@@ -48,10 +50,25 @@ void isrRightEncoder() {
     }
 }
 
-float getYaw(){
-  sensors_event_t event; 
-  bno.getEvent(&event); 
-  return event.orientation.x;
+float getYaw() {
+  // Check if a new sensor event is ready
+  if (bno08x.getSensorEvent(&sensorValue)) {
+    if (sensorValue.sensorId == SH2_GAME_ROTATION_VECTOR) {
+      
+      // 1. Extract the Quaternions
+      float qr = sensorValue.un.gameRotationVector.real;
+      float qi = sensorValue.un.gameRotationVector.i;
+      float qj = sensorValue.un.gameRotationVector.j;
+      float qk = sensorValue.un.gameRotationVector.k;
+
+      // 2. Convert Quaternions to Yaw (Z-axis rotation in radians)
+      float yaw_rad = atan2(2.0 * (qr * qk + qi * qj), 1.0 - 2.0 * (sq(qj) + sq(qk)));
+      
+      // 3. Convert to degrees
+      currentYaw = yaw_rad * (180.0 / PI);
+    }
+  }
+  return currentYaw; 
 }
 float getRight(){
   int raw = getCorrectedReading(1);
@@ -93,31 +110,6 @@ float getCorrectedReading(int sensorNum){
   return (raw_value - ambient_value); 
 }
 
-void printCalibrationLevel(){
-  uint8_t system, gyro, accel, mag = 0; 
-  bno.getCalibration(&system, &gyro, &accel, &mag);
-  BT.print("System|");BT.print(system);
-  BT.print("gyro|");BT.print(gyro);
-  BT.print("accel|");BT.print(accel);
-  BT.print("mag|");BT.print(mag);
-}
-void saveCalibrationToEEPROM(){
-  uint8_t system, gyro, accel, mag = 0; 
-  bno.getCalibration(&system, &gyro, &accel, &mag);
-  if (gyro == 3 && accel == 3) {
-    adafruit_bno055_offsets_t newCalib;
-    bno.getSensorOffsets(newCalib);
-    
-    int eeAddress = 0;
-    EEPROM.put(eeAddress, newCalib);
-    
-    Serial.println("Calibration saved to EEPROM!");
-    BT.println("Calibration saved to EEPROM!");
-  } else {
-    Serial.println("Sensor not fully calibrated yet. Cannot save.");
-    BT.println("Sensor not fully calibrated yet. Cannot save.");
-  }
-}
 void inithardware(){
   Wire1.begin();
   Serial.begin(115200); 
@@ -148,19 +140,11 @@ void inithardware(){
   attachInterrupt(digitalPinToInterrupt(EC_1A), isrLeftEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(EC_2A), isrRightEncoder, CHANGE);
 
-  if(!bno.begin()){
-      Serial.println("Couldnt intialise BNO55");
+  if(!bno08x.begin_I2C(0x4A, &Wire1)) { // Check your specific breakout's address
+      Serial.println("Couldnt intialise BNO085");
       while(1); 
   }
-  // --- EEPROM LOAD ---
-  int eeAddress = 0;
-  adafruit_bno055_offsets_t storedCalib;
-  EEPROM.get(eeAddress, storedCalib);
-  bno.setSensorOffsets(storedCalib);
-  Serial.println("Loaded Calibration from EEPROM!");
-  // -------------------
-  bno.setMode(OPERATION_MODE_CONFIG); 
-  bno.setMode(OPERATION_MODE_IMUPLUS); 
+  bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 10000);
 
   delay(1000); 
   Serial.println("testing"); 
