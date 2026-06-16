@@ -7,13 +7,21 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
+#include <EEPROM.h>
 
 
 void inithardware();
 float getYaw();
 float getRight();
 float getLeft();
-float getCorrectedReading(); 
+float getFront1();
+float getFront2();
+float getLeftDiagonal();
+float getRightDiagonal();
+float getCorrectedReading(int sensorNum);
+float getCorrectedReading();
+void printCalibrationLevel();
+void saveCalibrationToEEPROM();
 
 extern const int sensorPins[];
 extern const uint8_t EC_1A ; 
