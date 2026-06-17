@@ -1,13 +1,22 @@
 #ifndef two_H
 #define two_H
 #include "one.h"
-#include "two.h"
 #include <Arduino.h>
 extern float Kp;
 extern  float Ki; 
 extern  float Kd;
 extern int upper;
 extern int lower;
+
+extern int LEFT_SETPOINT;
+extern int LEFT_MAX;
+
+extern int RIGHT_SETPOINT;
+extern int RIGHT_MAX;
+extern int LEFT_WALL_THRESHOLD;  
+extern int RIGHT_WALL_THRESHOLD;
+extern int TURN_THRESHOLD;
+
 void motorStop();
 void motor1Forward(int speed);
 void motor2Forward(int speed);
@@ -17,5 +26,7 @@ bool isWallLeft();
 bool isWallRight();
 bool isWallFront();
 void turn(float angleDeg);
+void applyPIDCentering(int rawLeft, int rawRight);
+void centerUntilDistance(float dist);
 
 #endif

@@ -1,7 +1,6 @@
-#include "one.h"
 #include "two.h"
-
-// 1. Notice there are NO "extern" keywords here!
+#include "one.h"
+#include <math.h>
 const uint8_t EC_1A = 0; 
 const uint8_t EC_1B = 1;
 const uint8_t EC_2A = 30; 
@@ -21,7 +20,6 @@ const char* sensorNames[NUM_SENSORS] = {
 
 HardwareSerial &BT = Serial2;
 
-// 2. Notice I added the NAMES for your motor pins here!
 const uint8_t M1_IN1 = 2;  //direction
 const uint8_t M1_IN2 = 3;  //direction
 const uint8_t M2_IN1 = 24; //PWM
@@ -32,8 +30,15 @@ volatile long leftEncoderTicks = 0;
 volatile long rightEncoderTicks = 0;
 
 Adafruit_BNO08x bno08x;
-sh2_SensorValue_t sensorValue; // Struct to hold the complex data reports
+sh2_SensorValue_t sensorValue; 
 
+// FIX: This must be global so it remembers the angle between sensor updates
+float currentYaw = 0.0;
+const double WHEEL_DIAMETER = 4.2;
+const double TICKS_PER_REVOLUTION = 734.0;
+
+const double  WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER*M_PI;
+const double TICKS_PER_CM = TICKS_PER_REVOLUTION/WHEEL_CIRCUMFERENCE;
 void isrLeftEncoder() {
     if (digitalRead(EC_1A) == digitalRead(EC_1B)) {
         leftEncoderTicks--;
@@ -51,76 +56,95 @@ void isrRightEncoder() {
 }
 
 float getYaw() {
-  // Check if a new sensor event is ready
   if (bno08x.getSensorEvent(&sensorValue)) {
     if (sensorValue.sensorId == SH2_GAME_ROTATION_VECTOR) {
       
-      // 1. Extract the Quaternions
       float qr = sensorValue.un.gameRotationVector.real;
       float qi = sensorValue.un.gameRotationVector.i;
       float qj = sensorValue.un.gameRotationVector.j;
       float qk = sensorValue.un.gameRotationVector.k;
 
-      // 2. Convert Quaternions to Yaw (Z-axis rotation in radians)
       float yaw_rad = atan2(2.0 * (qr * qk + qi * qj), 1.0 - 2.0 * (sq(qj) + sq(qk)));
       
-      // 3. Convert to degrees
       currentYaw = yaw_rad * (180.0 / PI);
     }
   }
   return currentYaw; 
 }
+
+static inline void settleMicros(uint32_t us) {
+    uint32_t start = micros();
+    while ((uint32_t)(micros() - start) < us) { /* spin */ }
+}
+
 float getRight(){
   int raw = getCorrectedReading(1);
-  //float out = (2494.3112 / (raw + 31.6584)) - 0.4117;
-  float out =raw;
-  return out;
+  return raw;
 }
 float getLeft(){
   int raw = getCorrectedReading(3);
-  //float out = (2850.7585 / (raw + 14.7003)) - 2.6599;
-  float out =raw;
-  return out;
+  float correct= ((2020.0f/(float)raw) - 0.88f);
+  return correct;
 }
 float getFront1(){
   int raw = getCorrectedReading(0);
-  float out =raw;
-  return out;
+  return raw;
 }
 float getFront2(){
   int raw = getCorrectedReading(5);
-  float out =raw;
-  return out;
+  return raw;
 }
 float getLeftDiagonal(){
   int raw = getCorrectedReading(4);
-  float out =raw;
-  return out;
+  return raw;
 }
 float getRightDiagonal(){
   int raw = getCorrectedReading(2);
-  float out =raw;
-  return out;
+  return raw;
 }
+
 float getCorrectedReading(int sensorNum){
   digitalWrite(emitterPins[sensorNum], LOW);
-  float ambient_value = analogRead(sensorPins[sensorNum]); 
+  settleMicros(1000);
+  float ambient_value = analogRead(sensorPins[sensorNum]);
   digitalWrite(emitterPins[sensorNum], HIGH); 
+  settleMicros(1000);
   float raw_value = analogRead(sensorPins[sensorNum]); 
+  digitalWrite(emitterPins[sensorNum], LOW);
   return (raw_value - ambient_value); 
+}
+float getCorrectedReadingAvg(int sensorNum){
+  const int NUM_SAMPLES = 5;
+  
+  float ambient_sum = 0;
+  float raw_sum = 0;
+
+  for(int i = 0; i < NUM_SAMPLES; i++){
+    // Ambient read
+    digitalWrite(emitterPins[sensorNum], LOW);
+    settleMicros(1000);
+    ambient_sum += analogRead(sensorPins[sensorNum]);
+
+    // Active read
+    digitalWrite(emitterPins[sensorNum], HIGH);
+    settleMicros(1000);
+    raw_sum += analogRead(sensorPins[sensorNum]);
+  }
+
+  digitalWrite(emitterPins[sensorNum], LOW);
+  return (raw_sum - ambient_sum) / NUM_SAMPLES;
 }
 
 void inithardware(){
   Wire1.begin();
   Serial.begin(115200); 
-  BT.begin(9600);
+
+  BT.begin(115200);
+  
   while (!Serial && millis() < 2000); 
 
-  // Initialize all pins using a loop
   for (int i = 0; i < NUM_SENSORS; i++) {
-    if(i==0||i==5)continue;
     pinMode(emitterPins[i], OUTPUT);
-    //digitalWrite(emitterPins[i], HIGH);  // Keep all IR transmitters ON
     pinMode(sensorPins[i], INPUT); 
   }
   
@@ -140,14 +164,14 @@ void inithardware(){
   attachInterrupt(digitalPinToInterrupt(EC_1A), isrLeftEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(EC_2A), isrRightEncoder, CHANGE);
 
-  if(!bno08x.begin_I2C(0x4A, &Wire1)) { // Check your specific breakout's address
+  if(!bno08x.begin_I2C(0x4B, &Wire1)) { 
       Serial.println("Couldnt intialise BNO085");
       while(1); 
   }
+  Serial.println("IMU working");
   bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 10000);
 
   delay(1000); 
   Serial.println("testing"); 
-  bno.setExtCrystalUse(true);
   BT.print("setupdone");
 }

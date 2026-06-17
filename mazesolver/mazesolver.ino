@@ -3,9 +3,6 @@
 #include <EEPROM.h>
 #include <Arduino.h>
 #include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BNO055.h>
-#include <utility/imumaths.h>
 
 void setup() {
   inithardware();
@@ -13,130 +10,68 @@ void setup() {
 }
 
 void loop() {
-  
-  if (BT.available() > 0){
+  if (BT.available() > 0) {
     char incomingChar = BT.read();
+    
+    // Ignore stray invisible characters from the Serial Monitor
+    if (incomingChar == '\n' || incomingChar == '\r') {
+      return; 
+    }
+    
     BT.print(incomingChar);
-    if(incomingChar=='T'){
-      turn(90);
+
+    if (incomingChar == 'f') {
+      centerUntilDistance(125);
+    }
+    
+    if (incomingChar == 'Y') {
       BT.println(getYaw());
     }
-    if(incomingChar=='S'){
-      saveCalibrationToEEPROM();
-    }
-    if(incomingChar=='Y'){
-      BT.println(getYaw());
-      printCalibrationLevel();
-    }
+    
     if (incomingChar == 'P') {
       BT.print("\nEnter KP value: ");
-
-      // 1. Flush the buffer: Read and discard any leftover characters 
-      // (like the 'Enter' key you pressed after typing 'P')
-      while (BT.available() > 0) {
-        BT.read();
-      }
-
-      // 2. Wait indefinitely until the user types the new value
-      while (BT.available() == 0) {
-        // The code is trapped in this empty loop until data arrives
-      }
-
-      // 3. Now that data has arrived, parse it
+      // Wait for data without deleting it
+      while (BT.available() == 0) { delay(1); }
       Kp = BT.parseFloat(); 
-
       BT.print("\nKP value: "); 
-      BT.print(Kp); 
-      BT.println();
+      BT.println(Kp);
     }
+    
     if (incomingChar == 'D') {
       BT.print("\nEnter KD value: "); 
-
-      // 1. Flush the buffer: Read and discard any leftover characters 
-      // (like the 'Enter' key you pressed after typing 'P')
-      while (BT.available() > 0) {
-        BT.read();
-      }
-
-      // 2. Wait indefinitely until the user types the new value
-      while (BT.available() == 0) {
-        // The code is trapped in this empty loop until data arrives
-      }
-
-      // 3. Now that data has arrived, parse it
+      // Wait for data without deleting it
+      while (BT.available() == 0) { delay(1); }
       Kd = BT.parseFloat(); 
-
       BT.print("\nKD value: "); 
-      BT.print(Kd); 
-      BT.println();
+      BT.println(Kd);
     }
-    if (incomingChar == 'U') {
-      BT.print("\nEnter upper value: "); 
-
-      // 1. Flush the buffer: Read and discard any leftover characters 
-      // (like the 'Enter' key you pressed after typing 'P')
-      while (BT.available() > 0) {
-        BT.read();
-      }
-
-      // 2. Wait indefinitely until the user types the new value
-      while (BT.available() == 0) {
-        // The code is trapped in this empty loop until data arrives
-      }
-
-      // 3. Now that data has arrived, parse it
-      upper = BT.parseInt(); 
-
-      BT.print("\nUpper value: "); 
-      BT.print(upper); 
-      BT.println();
+    
+    if (incomingChar == 't') {
+      BT.print("\nEnter turn threshold value: "); 
+      // Wait for data without deleting it
+      while (BT.available() == 0) { delay(1); }
+      TURN_THRESHOLD = BT.parseInt();
+      BT.print("\nTurn threshold value: "); 
+      BT.println(TURN_THRESHOLD);
     }
-    if (incomingChar == 'L') {
-      BT.print("\nEnter lower value: "); 
-
-      // 1. Flush the buffer: Read and discard any leftover characters 
-      // (like the 'Enter' key you pressed after typing 'P')
-      while (BT.available() > 0) {
-        BT.read();
-      }
-
-      // 2. Wait indefinitely until the user types the new value
-      while (BT.available() == 0) {
-        // The code is trapped in this empty loop until data arrives
-      }
-
-      // 3. Now that data has arrived, parse it
-      lower = BT.parseInt(); 
-
-      BT.print("\nLower value: "); 
-      BT.print(lower); 
-      BT.println();
-    }
-  }
+  } // <-- This brace closes the if(BT.available() > 0) statement
 }
 
 void leftWallFollow() { 
- if (!isWallLeft()) {// turn left
+ if (!isWallLeft()) {
     turn(-90.0f);
-    
-    delay(5);  // small delay to settle
-    //centerUntil25cm();
+    delay(5);  
   }
-  else if (!isWallFront()) {//move forward 
-    // BT.println("Going front");
-   // centerUntil25cm();
+  else if (!isWallFront()) {
+    // move forward
   }
-  else if (!isWallRight()) {//turn right
-        // BT.println("Going right");
+  else if (!isWallRight()) {
     turn(90.0f);
     delay(5);
-    //centerUntil25cm();
   }
   else {
-        // BT.println("Going around");
     turn(180.0f);
     delay(5);
   }
-  //bool a = alignToNearest90();
   delay(5);
 }
