@@ -21,8 +21,8 @@ const char* sensorNames[NUM_SENSORS] = {
 HardwareSerial &BT = Serial2;
 
 const uint8_t M1_IN1 = 2;  //direction
-const uint8_t M1_IN2 = 3;  //direction
-const uint8_t M2_IN1 = 24; //PWM
+const uint8_t M1_IN2 = 3;  //PWM
+const uint8_t M2_IN1 = 24; //direction
 const uint8_t M2_IN2 = 25; //PWM
 #define AT_COMMAND_LINE 4
 const double MOTOR_BIAS = (127.0+15.0)/127.0; 
