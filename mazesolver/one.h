@@ -31,6 +31,7 @@ extern const uint8_t M2_IN2 ;
 //encoder ticks
 extern volatile long leftEncoderTicks ;
 extern volatile long rightEncoderTicks;
+extern volatile int buttonPressCount;
 
 //constants
 extern const double WHEEL_DIAMETER;
@@ -38,6 +39,7 @@ extern const double TICKS_PER_REVOLUTION;
 extern const double  WHEEL_CIRCUMFERENCE;
 extern const double TICKS_PER_CM;
 extern const double MOTOR_BIAS;
+extern const double MOTOR_BIAS_TURN; 
 
 //bluetooth 
 extern HardwareSerial &BT;

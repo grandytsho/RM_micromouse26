@@ -5,77 +5,91 @@
 float Kp = 1.2;
 float Kd = 3.5; 
 float Ki = 0.0;
-int LEFT_SETPOINT = 294;
-int LEFT_MAX = 880;
 
-int RIGHT_SETPOINT = 215;
-int RIGHT_MAX = 980;
-
-int LEFT_WALL_THRESHOLD = 140;  
-int RIGHT_WALL_THRESHOLD = 150; 
-
+float Kp_turn = 1.5;
+float Ki_turn = 0.0;
+float Kd_turn = 0.03;
+const int M1_DIR = M1_IN1; // Motor 1 (Left) Direction
+const int M1_PWM = M1_IN2; // Motor 1 (Left) PWM
+const int M2_DIR = M2_IN1; // Motor 2 (Right) Direction
+const int M2_PWM = M2_IN2; // Motor 2 (Right) PWM
 float targetYaw = 0;
 int TURN_THRESHOLD = 10; 
 const float IMU_SCALE        = 1.0f;  // 1° heading drift → 2 normalized units; tune this
 const float BOTH_WALL_BLEND  = 0.85f; // weight given to walls when both present
 const float ONE_WALL_BLEND   = 0.60f;
 
+//centering and wall thresholds
+int LEFT_SETPOINT = 294;
+int LEFT_MAX = 880;
+int RIGHT_SETPOINT = 215;
+int RIGHT_MAX = 980;
+int LEFT_WALL_THRESHOLD = 140;  
+int RIGHT_WALL_THRESHOLD = 150;
+int FRONT_WALL_THRESHOLD = 346;
+int FRONT2_WALL_THRESHOLD = 459;
+
+int FRONT_MAX = 0; 
+int FRONT2_MAX = 0; 
+
+
 // Motor Control Functions
 void motor1Forward(int speed) {
 
-  digitalWrite(M1_IN1, LOW);
-  analogWrite(M1_IN2, speed*MOTOR_BIAS);
+  digitalWrite(M1_DIR, LOW);
+  analogWrite(M1_PWM, speed);
 }
 void motor1Reverse(int speed) {
-  digitalWrite(M1_IN1, HIGH);
+  digitalWrite(M1_DIR, HIGH);
   // Invert the PWM because IN1 is HIGH
-  int mappedSpeed = 255 - (speed * MOTOR_BIAS);
+  int mappedSpeed = 255 - (speed);
   // Prevent negative values if speed * MOTOR_BIAS exceeds 255
   if (mappedSpeed < 0) mappedSpeed = 0; 
-  analogWrite(M1_IN2, mappedSpeed);
+  analogWrite(M1_PWM, mappedSpeed);
 }
 void motor2Forward(int speed) {
-  digitalWrite(M2_IN1, LOW);
-  analogWrite(M2_IN2, speed);
+  digitalWrite(M2_DIR, LOW);
+  analogWrite(M2_PWM, speed);
 }
 void motor2Reverse(int speed) {
-  digitalWrite(M2_IN1, HIGH);
+  digitalWrite(M2_DIR, HIGH);
   // Invert the PWM because IN1 is HIGH
-  analogWrite(M2_IN2, 255 - speed);
+  analogWrite(M2_PWM, 255 - speed);
 }
 void motorStop() {
-  // digitalWrite(M2_IN1, HIGH);
-  // analogWrite(M2_IN2, 255);
-  // digitalWrite(M1_IN1, HIGH);
-  // analogWrite(M1_IN2, 255);
+  digitalWrite(M2_DIR, HIGH);
+  analogWrite(M2_PWM, 255);
+  digitalWrite(M1_DIR, HIGH);
+  analogWrite(M1_PWM, 255);
   delay(150);
-  digitalWrite(M1_IN1, LOW);
-  analogWrite(M1_IN2, 0);
-  digitalWrite(M2_IN1, LOW);
-  analogWrite(M2_IN2, 0);
+  digitalWrite(M1_DIR, LOW);
+  analogWrite(M1_PWM, 0);
+  digitalWrite(M2_DIR, LOW);
+  analogWrite(M2_PWM, 0);
 
 }
+//wall detection functions
 bool isWallLeft(){
-  int rawLeft = getCorrectedReading(3);
-  return (rawLeft > LEFT_WALL_THRESHOLD);
+  int raw = getCorrectedReading(3);
+  return (raw > LEFT_WALL_THRESHOLD);
 }
 bool isWallRight(){
-  int rawRight = getCorrectedReading(1);
-  return (rawRight > RIGHT_WALL_THRESHOLD);
+  int raw = getCorrectedReading(1);
+  return (raw > RIGHT_WALL_THRESHOLD);
 }
+
 bool isWallFront(){
-  return false;
+  int front = getCorrectedReading(0);
+  int front2 = getCorrectedReading(5);
+  return ((front > FRONT_WALL_THRESHOLD)&&(front2 > FRONT_WALL_THRESHOLD));
 }
 void turn(float angleDeg){
-  float Kp = 1.0;
-  float Ki = 0.0;
-  float Kd = 0.03;
   int upper = 110;
   int lower = 40; 
   float startTime= millis();
   BT.println("turning");
-  BT.print("Kp|");BT.println(Kp);
-  BT.print("Kd|");BT.println(Kd);
+  BT.print("Kp|");BT.println(Kp_turn);
+  BT.print("Kd|");BT.println(Kd_turn);
   BT.print("Upper|");BT.println(upper);
   BT.print("Lower|");BT.println(lower); 
   float integral = 0.0f;
@@ -86,7 +100,7 @@ void turn(float angleDeg){
   delay(15);
 
   // A positive angleDeg turns right, negative turns left
-  targetYaw = startYaw + angleDeg;
+  float targetYaw = startYaw + angleDeg;
 
   // NEW: Normalize target strictly to 0 to 360
   while (targetYaw >= 360.0f) targetYaw -= 360.0f;
@@ -119,16 +133,16 @@ void turn(float angleDeg){
     float derivative = (error - previousError) / dt;
     previousError = error;
 
-    float output = Kp * error + Ki * integral + Kd * derivative;
+    float output = Kp_turn * error + Ki_turn * integral + Kd_turn * derivative;
 
     int pwm = constrain(abs(output), lower, upper);
 
     if (output > 0) {
-      motor2Reverse(pwm);   
-      motor1Forward(pwm);  
-    } else {
-      motor2Forward(pwm);  
       motor1Reverse(pwm);   
+      motor2Forward(pwm*MOTOR_BIAS_TURN);  
+    } else {
+      motor1Forward(pwm);  
+      motor2Reverse(pwm*MOTOR_BIAS_TURN);   
     }
 
     delay(5);
@@ -137,51 +151,55 @@ void turn(float angleDeg){
  motorStop();
 }
 
-float lastError = 0;
+
+// Wrapper functions connecting PID logic to your motor functions
+// Assuming Motor 1 = Left, Motor 2 = Right
+
+
 void applyPIDCentering(int rawLeft, int rawRight) {
   
-  float lastError = 0;
+  static float lastError = 0;
   float integral = 0;
 
-  const int BASE_SPEED = 110; 
+  const int BASE_SPEED = 100; 
   
   // A. Determine which walls are present
-  bool hasLeftWall = isWallLeft();
-  bool hasRightWall = isWallRight();
+  bool hasLeftWall = (rawLeft > LEFT_WALL_THRESHOLD);
+  bool hasRightWall = (rawRight > RIGHT_WALL_THRESHOLD);
   BT.print("right raw");BT.print(rawRight);BT.print("left raw");BT.println(rawLeft);
   BT.print("right wall");BT.print(hasLeftWall);BT.print("Left wall");BT.println(hasRightWall);
-
   // B. Normalize the readings using your calibration data
-    // Clamp before map() to prevent out-of-range outputs
-  int leftNormalized  = map(constrain(rawLeft,  LEFT_SETPOINT,  LEFT_MAX),
-                            LEFT_SETPOINT,  LEFT_MAX,  50, 100);
-  int rightNormalized = map(constrain(rawRight, RIGHT_SETPOINT, RIGHT_MAX),
-                            RIGHT_SETPOINT, RIGHT_MAX, 50, 100);
+  int leftNormalized = map(rawLeft, LEFT_SETPOINT, LEFT_MAX, 50, 100);
+  int rightNormalized = map(rawRight, RIGHT_SETPOINT, RIGHT_MAX, 50, 100);
   BT.print("Left");BT.print(leftNormalized);BT.print("|right");BT.println(rightNormalized);
-
+  // C. Calculate the Steering Error
+  float error = 0.0f;
   float currentYaw   = getYaw();
+  float wallError =0.0f;
   float headingError = targetYaw - currentYaw;
   if (headingError >  180.0f) headingError -= 360.0f;
   if (headingError < -180.0f) headingError += 360.0f;
-  float imuError = 0.0f;//headingError * IMU_SCALE;
+  float imuError = headingError * IMU_SCALE;
 
-  float error = 0.0f;
-  float wallError =0.0f;
+  
 
   if (hasLeftWall && hasRightWall) {
     wallError = (float)(leftNormalized - rightNormalized);
-    error     = wallError * BOTH_WALL_BLEND + imuError * (1.0f - BOTH_WALL_BLEND);
+    error     = wallError * BOTH_WALL_BLEND; //+ imuError * (1.0f - BOTH_WALL_BLEND);
+    BT.print("Wall Error: "); BT.print(wallError); BT.print("|Error: ");BT.println(error);
   } 
   else if (hasLeftWall && !hasRightWall) {
-    wallError = leftNormalized - 50;
-    error     = wallError * ONE_WALL_BLEND + imuError * (1.0f - ONE_WALL_BLEND);
+    wallError = (leftNormalized - 50);
+    error     = wallError * ONE_WALL_BLEND; //+ imuError * (1.0f - ONE_WALL_BLEND);
+    BT.print("Wall Error: "); BT.print(wallError); BT.print("|Error: ");BT.println(error);
   } 
   else if (hasRightWall && !hasLeftWall) {
-    wallError = 50 - rightNormalized; 
-    error     = wallError * ONE_WALL_BLEND + imuError * (1.0f - ONE_WALL_BLEND);
-  }
+    wallError = (50 - rightNormalized); 
+    error     = wallError * ONE_WALL_BLEND; //+ imuError * (1.0f - ONE_WALL_BLEND);
+    BT.print("Wall Error: "); BT.print(wallError); BT.print("|Error: ");BT.println(error); 
+  } 
   else {
-    error = imuError*2;
+    error = 0;//imuError*2;
   }
 
   // D. Perform the PID Math
@@ -189,21 +207,34 @@ void applyPIDCentering(int rawLeft, int rawRight) {
   //integral = integral + error;
   float D = error - lastError;
 
-  static float turnAdjustment = (Kp * P) + (Ki * integral) + (Kd * D);
+  float turnAdjustment = (Kp * P) + (Ki * integral) + (Kd * D);
   lastError = error;
   turnAdjustment = constrain(turnAdjustment,-75, 75);
   BT.print("turn Adjustment:");BT.println(turnAdjustment);
   // E. Apply adjustment to the motors
   int leftSpeed = BASE_SPEED + turnAdjustment;
   int rightSpeed = BASE_SPEED - turnAdjustment;
-  BT.print("yaw error");BT.println(imuError);
   BT.print("right speed");BT.print(rightSpeed);BT.print("Left Speed");BT.println(leftSpeed);
   // Allow values down to -255 so the mouse can reverse a wheel to steer sharply if needed
-  leftSpeed = constrain(leftSpeed, 40, 150);
-  rightSpeed = constrain(rightSpeed, 40, 150);
+  leftSpeed = constrain(leftSpeed, 60, 140);
+  rightSpeed = constrain(rightSpeed, 60, 140);
 
-  motor1Forward(leftSpeed);
-  motor2Forward(rightSpeed);
+  if(hasLeftWall && hasRightWall){
+    motor1Forward(leftSpeed*MOTOR_BIAS);
+    motor2Forward(rightSpeed);
+  }
+  if(hasLeftWall && !hasRightWall){
+    motor1Forward(leftSpeed);
+    motor2Forward(rightSpeed);
+  }
+  if(!hasLeftWall && hasRightWall){
+    motor1Forward(leftSpeed*MOTOR_BIAS);
+    motor2Forward(rightSpeed);
+  }
+  if(!hasLeftWall && !hasRightWall){
+    motor1Forward(leftSpeed*MOTOR_BIAS);
+    motor2Forward(rightSpeed);
+  }
 }
 
 void centerUntilDistance(float dist){
@@ -217,9 +248,26 @@ void centerUntilDistance(float dist){
       applyPIDCentering(currentLeft,currentRight); 
     }
     else{
-      motorStop(); 
+      motorStop();
+      BT.print("KP value: ");BT.println(Kp);
+      BT.print("KD value: ");BT.println(Kd); 
       break; 
     }
     delay(5);
   }
+}
+
+void squareUp(int rawFront, int rawFront2){
+  int frontNormalized = map(rawLeft, FRONT_WALL_THRESHOLD, FRONT_MAX, 50, 100);
+  int front2Normalized = map(rawRight, FRONT2_WALL_THRESHOLD, FRONT2_MAX, 50, 100);
+
+  float error = frontNormalised - front2Normalised;
+  static float lastError = 0; 
+  float derivative  = error - lastError;
+  lastError = error; 
+  float turnAdjustment = Kp*error+ Kd*derivative; 
+
+  motor1Forward(-turnAdjustment); 
+  motor2Forward(turnAdjustment);
+
 }

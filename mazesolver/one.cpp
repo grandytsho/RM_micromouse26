@@ -17,7 +17,8 @@ const char* sensorNames[NUM_SENSORS] = {
   "Front Lft", 
   "Front    "
 };
-
+const int ALGOPIN = 29;
+volatile int buttonPressCount = 0;
 HardwareSerial &BT = Serial2;
 
 const uint8_t M1_IN1 = 2;  //direction
@@ -25,7 +26,8 @@ const uint8_t M1_IN2 = 3;  //PWM
 const uint8_t M2_IN1 = 24; //direction
 const uint8_t M2_IN2 = 25; //PWM
 #define AT_COMMAND_LINE 4
-const double MOTOR_BIAS = (127.0+15.0)/127.0; 
+const double MOTOR_BIAS = (127.0+15.0)/127.0;
+const double MOTOR_BIAS_TURN = 0.9383; 
 volatile long leftEncoderTicks = 0;
 volatile long rightEncoderTicks = 0;
 
@@ -134,12 +136,14 @@ float getCorrectedReadingAvg(int sensorNum){
   digitalWrite(emitterPins[sensorNum], LOW);
   return (raw_sum - ambient_sum) / NUM_SAMPLES;
 }
-
+void algoInterrupt() {
+  buttonPressCount++; // Keep code short and fast!
+}
 void inithardware(){
   Wire1.begin();
   Serial.begin(115200); 
 
-  BT.begin(115200);
+  BT.begin(9600);
   
   while (!Serial && millis() < 2000); 
 
@@ -155,12 +159,14 @@ void inithardware(){
   pinMode(EC_1B, INPUT_PULLUP);
   pinMode(EC_2A, INPUT_PULLUP);
   pinMode(EC_2B, INPUT_PULLUP);
+  pinMode(ALGOPIN, INPUT_PULLUP);
 
   pinMode(M1_IN1, OUTPUT);
   pinMode(M1_IN2, OUTPUT);
   pinMode(M2_IN1, OUTPUT);
   pinMode(M2_IN2, OUTPUT);
 
+  attachInterrupt(digitalPinToInterrupt(ALGOPIN), algoInterrupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(EC_1A), isrLeftEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(EC_2A), isrRightEncoder, CHANGE);
 

@@ -5,6 +5,10 @@
 extern float Kp;
 extern  float Ki; 
 extern  float Kd;
+
+extern float Kp_turn;
+extern float Kd_turn;
+extern float Ki_turn; 
 extern int upper;
 extern int lower;
 
