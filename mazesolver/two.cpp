@@ -9,10 +9,7 @@ float Ki = 0.0;
 float Kp_turn = 1.5;
 float Ki_turn = 0.0;
 float Kd_turn = 0.03;
-const int M1_DIR = M1_IN1; // Motor 1 (Left) Direction
-const int M1_PWM = M1_IN2; // Motor 1 (Left) PWM
-const int M2_DIR = M2_IN1; // Motor 2 (Right) Direction
-const int M2_PWM = M2_IN2; // Motor 2 (Right) PWM
+
 float targetYaw = 0;
 int TURN_THRESHOLD = 10; 
 const float IMU_SCALE        = 1.0f;  // 1° heading drift → 2 normalized units; tune this
@@ -35,38 +32,49 @@ int FRONT2_MAX = 0;
 
 // Motor Control Functions
 void motor1Forward(int speed) {
-
-  digitalWrite(M1_DIR, LOW);
+  digitalWrite(M1_IN1, HIGH);
+  digitalWrite(M1_IN2, LOW);
   analogWrite(M1_PWM, speed);
 }
+
 void motor1Reverse(int speed) {
-  digitalWrite(M1_DIR, HIGH);
-  // Invert the PWM because IN1 is HIGH
-  int mappedSpeed = 255 - (speed);
-  // Prevent negative values if speed * MOTOR_BIAS exceeds 255
-  if (mappedSpeed < 0) mappedSpeed = 0; 
-  analogWrite(M1_PWM, mappedSpeed);
+  digitalWrite(M1_IN1, LOW);
+  digitalWrite(M1_IN2, HIGH);
+  // No PWM inversion needed for the TB6612!
+  analogWrite(M1_PWM, speed);
 }
+
 void motor2Forward(int speed) {
-  digitalWrite(M2_DIR, LOW);
+  digitalWrite(M2_IN1, HIGH);
+  digitalWrite(M2_IN2, LOW);
   analogWrite(M2_PWM, speed);
 }
-void motor2Reverse(int speed) {
-  digitalWrite(M2_DIR, HIGH);
-  // Invert the PWM because IN1 is HIGH
-  analogWrite(M2_PWM, 255 - speed);
-}
-void motorStop() {
-  digitalWrite(M2_DIR, HIGH);
-  analogWrite(M2_PWM, 255);
-  digitalWrite(M1_DIR, HIGH);
-  analogWrite(M1_PWM, 255);
-  delay(150);
-  digitalWrite(M1_DIR, LOW);
-  analogWrite(M1_PWM, 0);
-  digitalWrite(M2_DIR, LOW);
-  analogWrite(M2_PWM, 0);
 
+void motor2Reverse(int speed) {
+  digitalWrite(M2_IN1, LOW);
+  digitalWrite(M2_IN2, HIGH);
+  // No PWM inversion needed for the TB6612!
+  analogWrite(M2_PWM, speed);
+}
+
+void motorStop() {
+  // 1. Hard Brake Phase (TB6612 short brake = both IN pins HIGH)
+  digitalWrite(M1_IN1, HIGH);
+  digitalWrite(M1_IN2, HIGH);
+  analogWrite(M1_PWM, 0); 
+  
+  digitalWrite(M2_IN1, HIGH);
+  digitalWrite(M2_IN2, HIGH);
+  analogWrite(M2_PWM, 0);
+  
+  delay(150); // Hold the brake for 150ms just like your old code
+  
+  // 2. Coast / Standby Phase (TB6612 coast = both IN pins LOW)
+  digitalWrite(M1_IN1, LOW);
+  digitalWrite(M1_IN2, LOW);
+  
+  digitalWrite(M2_IN1, LOW);
+  digitalWrite(M2_IN2, LOW);
 }
 //wall detection functions
 bool isWallLeft(){
@@ -257,17 +265,17 @@ void centerUntilDistance(float dist){
   }
 }
 
-void squareUp(int rawFront, int rawFront2){
-  int frontNormalized = map(rawLeft, FRONT_WALL_THRESHOLD, FRONT_MAX, 50, 100);
-  int front2Normalized = map(rawRight, FRONT2_WALL_THRESHOLD, FRONT2_MAX, 50, 100);
+// void squareUp(int rawFront, int rawFront2){
+//   int frontNormalized = map(rawLeft, FRONT_WALL_THRESHOLD, FRONT_MAX, 50, 100);
+//   int front2Normalized = map(rawRight, FRONT2_WALL_THRESHOLD, FRONT2_MAX, 50, 100);
 
-  float error = frontNormalised - front2Normalised;
-  static float lastError = 0; 
-  float derivative  = error - lastError;
-  lastError = error; 
-  float turnAdjustment = Kp*error+ Kd*derivative; 
+//   float error = frontNormalised - front2Normalised;
+//   static float lastError = 0; 
+//   float derivative  = error - lastError;
+//   lastError = error; 
+//   float turnAdjustment = Kp*error+ Kd*derivative; 
 
-  motor1Forward(-turnAdjustment); 
-  motor2Forward(turnAdjustment);
+//   motor1Forward(-turnAdjustment); 
+//   motor2Forward(turnAdjustment);
 
-}
+// }

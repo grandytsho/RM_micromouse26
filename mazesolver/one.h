@@ -23,10 +23,14 @@ extern const uint8_t EC_1A ;
 extern const uint8_t EC_1B ;
 extern const uint8_t EC_2A ; 
 extern const uint8_t EC_2B ;
-extern const uint8_t M1_IN1 ;
-extern const uint8_t M1_IN2 ;  
-extern const uint8_t M2_IN1 ; 
-extern const uint8_t M2_IN2 ;
+
+extern const uint8_t M1_IN1; // M2_INPUT1
+extern const uint8_t M1_IN2; // M2_INPUT1
+extern const uint8_t M1_PWM; // M2 PWM
+
+extern const uint8_t M2_IN1;  // M2_INPUT1
+extern const uint8_t M2_IN2;  // M2_INPUT2
+extern const uint8_t M2_PWM;  // M2 PWM
 
 //encoder ticks
 extern volatile long leftEncoderTicks ;

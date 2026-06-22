@@ -12,7 +12,7 @@ void setup() {
 void loop() {
   if (BT.available() > 0) {
     char incomingChar = BT.read();
-    
+    BT.println(incomingChar);
     // Ignore stray invisible characters from the Serial Monitor
     if (incomingChar == '\n' || incomingChar == '\r') {
       return; 
@@ -40,7 +40,7 @@ void loop() {
       BT.print("\nEnter KD turn value: "); 
       while (BT.available() == 0) { delay(1); }
       Kd_turn = BT.parseFloat(); 
-git bash      BT.print("\nKD turn value: "); 
+  BT.print("\nKD turn value: "); 
       BT.println(Kd_turn);
     }
     
