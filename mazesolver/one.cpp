@@ -47,12 +47,13 @@ volatile long rightEncoderTicks = 0;
 Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue; 
 
-float currentYaw = 0.0;
-const double WHEEL_DIAMETER = 4.2;
-const double TICKS_PER_REVOLUTION = 734.0;
-
-const double  WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER*M_PI;
-const double TICKS_PER_CM = TICKS_PER_REVOLUTION/WHEEL_CIRCUMFERENCE;
+float currentYaw = 0.0f;
+const float WHEEL_DIAMETER = 3.4f;
+const float TICKS_PER_REVOLUTION_LEFT = 743.0f;
+const float TICKS_PER_REVOLUTION_RIGHT = 737.0f; 
+const float WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER*M_PI;
+const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT/WHEEL_CIRCUMFERENCE;
+const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
 
 void isrLeftEncoder() {
     if (digitalRead(EC_1A) == digitalRead(EC_1B)) {

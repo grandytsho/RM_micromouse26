@@ -2,8 +2,8 @@
 #include "two.h"
 #include <Arduino.h>
 
-float Kp = 1.2;
-float Kd = 3.5; 
+float Kp = 0.5;
+float Kd = 0.15; 
 float Ki = 0.0;
 
 float Kp_turn = 1.2;
@@ -17,19 +17,22 @@ const float BOTH_WALL_BLEND  = 0.85f; // weight given to walls when both present
 const float ONE_WALL_BLEND   = 0.60f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 294;
-int LEFT_MAX = 880;
-int RIGHT_SETPOINT = 215;
-int RIGHT_MAX = 980;
-int LEFT_WALL_THRESHOLD = 140;  
-int RIGHT_WALL_THRESHOLD = 150;
-int FRONT_WALL_THRESHOLD = 346;
-int FRONT2_WALL_THRESHOLD = 459;
+int LEFT_SETPOINT = 460;
+int LEFT_MAX = 800;
+int RIGHT_SETPOINT = 429;
+int RIGHT_MAX = 800;
+int LEFT_WALL_THRESHOLD = 360; 
+int RIGHT_WALL_THRESHOLD = 320;
+int FRONT_WALL_THRESHOLD = 329;
+int FRONT2_WALL_THRESHOLD = 365;
 
 int FRONT_MAX = 0; 
 int FRONT2_MAX = 0; 
 
 static float _deriv_filtered = 0.0f;
+const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT/WHEEL_CIRCUMFERENCE;
+const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
+
 
 // Motor Control Functions
 void motor1Forward(int speed) {
@@ -198,16 +201,19 @@ void applyPIDCentering(int rawLeft, int rawRight) {
   // A. Determine which walls are present
   bool hasLeftWall = (rawLeft > LEFT_WALL_THRESHOLD);
   bool hasRightWall = (rawRight > RIGHT_WALL_THRESHOLD);
+
   BT.print("right raw");BT.print(rawRight);BT.print("left raw");BT.println(rawLeft);
   BT.print("right wall");BT.print(hasLeftWall);BT.print("Left wall");BT.println(hasRightWall);
   // B. Normalize the readings using your calibration data
   int leftNormalized = map(rawLeft, LEFT_SETPOINT, LEFT_MAX, 50, 100);
   int rightNormalized = map(rawRight, RIGHT_SETPOINT, RIGHT_MAX, 50, 100);
+
   BT.print("Left");BT.print(leftNormalized);BT.print("|right");BT.println(rightNormalized);
   // C. Calculate the Steering Error
   float error = 0.0f;
   float currentYaw   = getYaw(15);
   float wallError =0.0f;
+
   float headingError = targetYaw - currentYaw;
   if (headingError >  180.0f) headingError -= 360.0f;
   if (headingError < -180.0f) headingError += 360.0f;
@@ -217,17 +223,17 @@ void applyPIDCentering(int rawLeft, int rawRight) {
 
   if (hasLeftWall && hasRightWall) {
     wallError = (float)(leftNormalized - rightNormalized);
-    error     = wallError * BOTH_WALL_BLEND; //+ imuError * (1.0f - BOTH_WALL_BLEND);
+    error     = wallError * BOTH_WALL_BLEND + imuError * (1.0f - BOTH_WALL_BLEND);
     BT.print("Wall Error: "); BT.print(wallError); BT.print("|Error: ");BT.println(error);
   } 
   else if (hasLeftWall && !hasRightWall) {
     wallError = (leftNormalized - 50);
-    error     = wallError * ONE_WALL_BLEND; //+ imuError * (1.0f - ONE_WALL_BLEND);
+    error     = wallError * ONE_WALL_BLEND + imuError * (1.0f - ONE_WALL_BLEND);
     BT.print("Wall Error: "); BT.print(wallError); BT.print("|Error: ");BT.println(error);
   } 
   else if (hasRightWall && !hasLeftWall) {
     wallError = (50 - rightNormalized); 
-    error     = wallError * ONE_WALL_BLEND; //+ imuError * (1.0f - ONE_WALL_BLEND);
+    error     = wallError * ONE_WALL_BLEND+ imuError * (1.0f - ONE_WALL_BLEND);
     BT.print("Wall Error: "); BT.print(wallError); BT.print("|Error: ");BT.println(error); 
   } 
   else {
@@ -252,11 +258,11 @@ void applyPIDCentering(int rawLeft, int rawRight) {
   rightSpeed = constrain(rightSpeed, 60, 140);
 
   if(hasLeftWall && hasRightWall){
-    motor1Forward(leftSpeed*MOTOR_BIAS);
+    motor1Forward(leftSpeed*1);
     motor2Forward(rightSpeed);
   }
   if(hasLeftWall && !hasRightWall){
-    motor1Forward(leftSpeed);
+    motor1Forward(leftSpeed*1);
     motor2Forward(rightSpeed);
   }
   if(!hasLeftWall && hasRightWall){
@@ -271,7 +277,7 @@ void applyPIDCentering(int rawLeft, int rawRight) {
 
 void centerUntilDistance(float dist){
   long currentTicks = (leftEncoderTicks + rightEncoderTicks)/2;
-  long TARGET_TICKS = dist * TICKS_PER_CM + currentTicks;
+  long TARGET_TICKS = dist * ((TICKS_PER_CM_LEFT + TICKS_PER_CM_RIGHT)/2.0) + currentTicks;
   while(true){
     currentTicks = (leftEncoderTicks + rightEncoderTicks)/2;
     if(currentTicks < TARGET_TICKS){

@@ -21,7 +21,7 @@ void loop() {
     BT.print(incomingChar);
 
     if (incomingChar == 'f') {
-      centerUntilDistance(150);
+      centerUntilDistance(100);
     }
     
     if (incomingChar == 'Y') {
@@ -29,19 +29,19 @@ void loop() {
     }
     
     if (incomingChar == 'p') {
-      BT.print("\nEnter KP turn value: ");
+      BT.print("\nEnter KP  value: ");
       while (BT.available() == 0) { delay(1); }
-      Kp_turn = BT.parseFloat(); 
-      BT.print("\nKP turn value: "); 
-      BT.println(Kp_turn);
+      Kp= BT.parseFloat(); 
+      BT.print("\nKP  value: "); 
+      BT.println(Kp);
     }
     
     if (incomingChar == 'd') {
-      BT.print("\nEnter KD turn value: "); 
+      BT.print("\nEnter KD value: "); 
       while (BT.available() == 0) { delay(1); }
-      Kd_turn = BT.parseFloat(); 
-  BT.print("\nKD turn value: "); 
-      BT.println(Kd_turn);
+      Kd = BT.parseFloat(); 
+  BT.print("\nKD value: "); 
+      BT.println(Kd);
     }
     
     if (incomingChar == 't') {

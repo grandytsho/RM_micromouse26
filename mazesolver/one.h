@@ -38,10 +38,11 @@ extern volatile long rightEncoderTicks;
 extern volatile int buttonPressCount;
 
 //constants
-extern const double WHEEL_DIAMETER;
-extern const double TICKS_PER_REVOLUTION;
-extern const double  WHEEL_CIRCUMFERENCE;
-extern const double TICKS_PER_CM;
+extern const float WHEEL_DIAMETER;
+extern const float TICKS_PER_REVOLUTION_LEFT;
+extern const float TICKS_PER_REVOLUTION_RIGHT;
+extern const float  WHEEL_CIRCUMFERENCE;
+extern const float TICKS_PER_CM;
 extern const double MOTOR_BIAS;
 extern const double MOTOR_BIAS_TURN; 
 
