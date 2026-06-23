@@ -70,23 +70,27 @@ void isrRightEncoder() {
     }
 }
 
-float getYaw() {
-  if (bno08x.getSensorEvent(&sensorValue)) {
-    if (sensorValue.sensorId == SH2_GAME_ROTATION_VECTOR) {
-      
-      float qr = sensorValue.un.gameRotationVector.real;
-      float qi = sensorValue.un.gameRotationVector.i;
-      float qj = sensorValue.un.gameRotationVector.j;
-      float qk = sensorValue.un.gameRotationVector.k;
+float getYaw(uint16_t timeoutMs = 15) {
+    unsigned long start = millis();
+    while ((millis() - start) < timeoutMs) {
+        if (bno08x.getSensorEvent(&sensorValue)) {
+            if (sensorValue.sensorId == SH2_GAME_ROTATION_VECTOR) {
+                float qr = sensorValue.un.gameRotationVector.real;
+                float qi = sensorValue.un.gameRotationVector.i;
+                float qj = sensorValue.un.gameRotationVector.j;
+                float qk = sensorValue.un.gameRotationVector.k;
 
-      float yaw_rad = atan2(2.0 * (qr * qk + qi * qj), 1.0 - 2.0 * (sq(qj) + sq(qk)));
-      
-      currentYaw = yaw_rad * (180.0 / PI);
+                float yaw_rad = atan2(
+                    2.0f * (qr * qk + qi * qj),
+                    1.0f - 2.0f * (sq(qj) + sq(qk))
+                );
+                currentYaw = yaw_rad * (180.0f / PI);
+                return currentYaw;  
+            }
+        }
     }
-  }
-  return currentYaw; 
+    return currentYaw;  
 }
-
 static inline void settleMicros(uint32_t us) {
     uint32_t start = micros();
     while ((uint32_t)(micros() - start) < us) { /* spin */ }

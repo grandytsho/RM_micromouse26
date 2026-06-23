@@ -7,7 +7,7 @@
 #include <Adafruit_BNO08x.h>
 
 void inithardware();
-float getYaw();
+float getYaw(uint16_t timeoutMs);
 float getRight();
 float getLeft();
 float getFront1();

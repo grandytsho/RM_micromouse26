@@ -25,7 +25,7 @@ void loop() {
     }
     
     if (incomingChar == 'Y') {
-      BT.println(getYaw());
+      BT.println(getYaw(15));
     }
     
     if (incomingChar == 'p') {

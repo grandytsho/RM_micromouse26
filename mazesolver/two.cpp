@@ -6,9 +6,9 @@ float Kp = 1.2;
 float Kd = 3.5; 
 float Ki = 0.0;
 
-float Kp_turn = 1.5;
+float Kp_turn = 1.2;
 float Ki_turn = 0.0;
-float Kd_turn = 0.03;
+float Kd_turn = 0.015;
 
 float targetYaw = 0;
 int TURN_THRESHOLD = 10; 
@@ -29,17 +29,18 @@ int FRONT2_WALL_THRESHOLD = 459;
 int FRONT_MAX = 0; 
 int FRONT2_MAX = 0; 
 
+static float _deriv_filtered = 0.0f;
 
 // Motor Control Functions
 void motor1Forward(int speed) {
-  digitalWrite(M1_IN1, HIGH);
-  digitalWrite(M1_IN2, LOW);
+  digitalWrite(M1_IN1, LOW);
+  digitalWrite(M1_IN2, HIGH);
   analogWrite(M1_PWM, speed);
 }
 
 void motor1Reverse(int speed) {
-  digitalWrite(M1_IN1, LOW);
-  digitalWrite(M1_IN2, HIGH);
+  digitalWrite(M1_IN1, HIGH);
+  digitalWrite(M1_IN2, LOW);
   // No PWM inversion needed for the TB6612!
   analogWrite(M1_PWM, speed);
 }
@@ -59,13 +60,13 @@ void motor2Reverse(int speed) {
 
 void motorStop() {
   // 1. Hard Brake Phase (TB6612 short brake = both IN pins HIGH)
-  digitalWrite(M1_IN1, HIGH);
-  digitalWrite(M1_IN2, HIGH);
-  analogWrite(M1_PWM, 0); 
+  // digitalWrite(M1_IN1, HIGH);
+  // digitalWrite(M1_IN2, HIGH);
+  // analogWrite(M1_PWM, 0); 
   
-  digitalWrite(M2_IN1, HIGH);
-  digitalWrite(M2_IN2, HIGH);
-  analogWrite(M2_PWM, 0);
+  // digitalWrite(M2_IN1, HIGH);
+  // digitalWrite(M2_IN2, HIGH);
+  // analogWrite(M2_PWM, 0);
   
   delay(150); // Hold the brake for 150ms just like your old code
   
@@ -92,19 +93,27 @@ bool isWallFront(){
   return ((front > FRONT_WALL_THRESHOLD)&&(front2 > FRONT_WALL_THRESHOLD));
 }
 void turn(float angleDeg){
-  int upper = 110;
-  int lower = 40; 
+  const int   upper         = 110;
+  const int   lower         = 20;
+  const float turnThreshold = 0.25f;   // degrees — slightly relaxed for stability
+  const float DERIV_ALPHA   = 0.25f;   // EMA weight for new sample (lower = smoother)
+  const float DT_FLOOR      = 0.004f;  // FIX 1: 4 ms floor matches delay(5) reality
+
   float startTime= millis();
+
   BT.println("turning");
   BT.print("Kp|");BT.println(Kp_turn);
   BT.print("Kd|");BT.println(Kd_turn);
   BT.print("Upper|");BT.println(upper);
   BT.print("Lower|");BT.println(lower); 
+
   float integral = 0.0f;
   float previousError = 0.0f;
+  _deriv_filtered     = 0.0f;
+
   unsigned long lastTime = millis();
 
-  float startYaw = getYaw(); // Will return 0 to 360
+  float startYaw = getYaw(15); // Will return 0 to 360
   delay(15);
 
   // A positive angleDeg turns right, negative turns left
@@ -115,12 +124,11 @@ void turn(float angleDeg){
   while (targetYaw < 0.0f) targetYaw += 360.0f;
 
   while (true) {
-    if (millis() - startTime > 3000){ 
+    if (millis() - startTime > 3000UL){ 
       BT.println("turn timed out");
       break;
     }
-    float turnThreshold = 0.25;
-    float currentYaw = getYaw(); 
+    float currentYaw = getYaw(15); 
     float error = targetYaw - currentYaw;
 
     // It guarantees the error is always the shortest path (-180 to +180)
@@ -133,15 +141,31 @@ void turn(float angleDeg){
     unsigned long now = millis();
     float dt = (now - lastTime) / 1000.0f;
     lastTime = now;
-    if (dt < 0.001f) dt = 0.001f;
+        if (dt < DT_FLOOR) dt = DT_FLOOR;
 
-    integral += error * dt;
-    integral = constrain(integral, -50.0f, 50.0f);
+        // ── integral with anti-windup clamp ───────────────────────────────
+        // FIX 6: reset integral when close to target to prevent overshoot
+        // from accumulated wind-up during the approach.
+        if (fabsf(error) < 5.0f) {
+            integral = 0.0f;
+        } else {
+            integral += error * dt;
+            integral  = constrain(integral, -30.0f, 30.0f);
+        }
 
-    float derivative = (error - previousError) / dt;
-    previousError = error;
+        // ── derivative with EMA low-pass filter ───────────────────────────
+        // FIX 2: raw derivative from IMU noise causes spikes.  An
+        // exponential moving average damps high-frequency jitter while
+        // still reacting to real angular-velocity changes.
+        float raw_deriv   = (error - previousError) / dt;
+        _deriv_filtered   = DERIV_ALPHA * raw_deriv
+                          + (1.0f - DERIV_ALPHA) * _deriv_filtered;
+        previousError = error;
 
-    float output = Kp_turn * error + Ki_turn * integral + Kd_turn * derivative;
+        // ── PID output ────────────────────────────────────────────────────
+        float output = Kp_turn * error
+                     + Ki_turn * integral
+                     + Kd_turn * _deriv_filtered;
 
     int pwm = constrain(abs(output), lower, upper);
 
@@ -182,7 +206,7 @@ void applyPIDCentering(int rawLeft, int rawRight) {
   BT.print("Left");BT.print(leftNormalized);BT.print("|right");BT.println(rightNormalized);
   // C. Calculate the Steering Error
   float error = 0.0f;
-  float currentYaw   = getYaw();
+  float currentYaw   = getYaw(15);
   float wallError =0.0f;
   float headingError = targetYaw - currentYaw;
   if (headingError >  180.0f) headingError -= 360.0f;
