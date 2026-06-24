@@ -40,8 +40,16 @@ void loop() {
       BT.print("\nEnter KD value: "); 
       while (BT.available() == 0) { delay(1); }
       Kd = BT.parseFloat(); 
-  BT.print("\nKD value: "); 
+      BT.print("\nKD value: "); 
       BT.println(Kd);
+    }
+
+    if (incomingChar == 'i') {
+      BT.print("\nEnter KI value: "); 
+      while (BT.available() == 0) { delay(1); }
+      Ki = BT.parseFloat(); 
+      BT.print("\nKi value: "); 
+      BT.println(Ki);
     }
     
     if (incomingChar == 't') {

@@ -31,6 +31,7 @@ bool isWallRight();
 bool isWallFront();
 void turn(float angleDeg);
 void applyPIDCentering(int rawLeft, int rawRight);
+void applyPIDCenteringCascaded(int rawLeft, int rawRight);
 void centerUntilDistance(float dist);
 
 #endif
