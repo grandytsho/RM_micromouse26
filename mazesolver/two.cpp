@@ -1,6 +1,7 @@
 #include "one.h"
 #include "two.h"
 #include <Arduino.h>
+#include <cmath>
 
 float Kp = 0.5;
 float Kd = 0.15; 
@@ -9,6 +10,9 @@ float Ki = 0.0;
 float Kp_turn = 1.2;
 float Ki_turn = 0.0;
 float Kd_turn = 0.015;
+
+float Kp_align =0.5;
+float Kd_align = 0.01; 
 
 float targetYaw = 0;
 int TURN_THRESHOLD = 10; 
@@ -23,11 +27,11 @@ int RIGHT_SETPOINT = 429;
 int RIGHT_MAX = 800;
 int LEFT_WALL_THRESHOLD = 360; 
 int RIGHT_WALL_THRESHOLD = 320;
-int FRONT_WALL_THRESHOLD = 329;
-int FRONT2_WALL_THRESHOLD = 365;
+int FRONT_WALL_THRESHOLD = 330;
+int FRONT2_WALL_THRESHOLD = 262;
 
-int FRONT_MAX = 0; 
-int FRONT2_MAX = 0; 
+int FRONT_MAX = 392; 
+int FRONT2_MAX = 300; 
 
 static float _deriv_filtered = 0.0f;
 const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT/WHEEL_CIRCUMFERENCE;
@@ -80,6 +84,17 @@ void motorStop() {
   digitalWrite(M2_IN1, LOW);
   digitalWrite(M2_IN2, LOW);
 }
+
+void motor1Wraper(int speed){
+  if(speed < 0) motor1Reverse(abs(speed));
+  else motor1Forward(speed);
+}
+
+void motor2Wraper(int speed){
+  if(speed < 0) motor2Reverse(abs(speed));
+  else motor2Forward(speed);
+}
+
 //wall detection functions
 bool isWallLeft(){
   int raw = getCorrectedReading(3);
@@ -97,7 +112,7 @@ bool isWallFront(){
 }
 void turn(float angleDeg){
   const int   upper         = 110;
-  const int   lower         = 20;
+  const int   lower         = 23;
   const float turnThreshold = 0.25f;   // degrees — slightly relaxed for stability
   const float DERIV_ALPHA   = 0.25f;   // EMA weight for new sample (lower = smoother)
   const float DT_FLOOR      = 0.004f;  // FIX 1: 4 ms floor matches delay(5) reality
@@ -296,106 +311,224 @@ void centerUntilDistance(float dist){
   }
 }
 
-// --- PID GAINS ---
-// Outer Loop: Position to Steering Angle (TINY values for raw ADC)
-float Kp_pos = 0.015;  
-float Kd_pos = 0.05;   
+void centerUntilWall(){
 
-// Inner Loop: Heading Angle to Motor PWM (LARGER values for IMU)
-float Kp_head = 4.0;
-float Kd_head = 0.5;
-
-void applyPIDCenteringCascaded(int rawLeft, int rawRight) {
-  static float lastPosError = 0.0f;
-  static float lastHeadingError = 0.0f;
-  
-  const int BASE_SPEED = 100;
-  
-  bool hasLeftWall = (rawLeft > LEFT_WALL_THRESHOLD);
-  bool hasRightWall = (rawRight > RIGHT_WALL_THRESHOLD);
-
-  // ==========================================
-  // 1. OUTER LOOP: Positional Error
-  // ==========================================
-  float posError = 0.0f;
-
-  if (hasLeftWall && hasRightWall) {
-    // Both Walls: Balance the raw ADC deviance
-    float leftDev = rawLeft - LEFT_SETPOINT;
-    float rightDev = rawRight - RIGHT_SETPOINT;
-    posError = leftDev - rightDev; // Positive = drifting left
-  } 
-  else if (hasLeftWall && !hasRightWall) {
-    // Left Wall Only
-    posError = rawLeft - LEFT_SETPOINT;
-  } 
-  else if (hasRightWall && !hasLeftWall) {
-    // Right Wall Only (Negate so drifting right yields negative error)
-    posError = -(rawRight - RIGHT_SETPOINT);
-  } 
-  else {
-    // No Walls: Trust the IMU
-    posError = 0.0f;
+  if(isWallRight()&&!isWallFront()){
+    int currentLeft = getCorrectedReading(3);
+    int currentRight = getCorrectedReading(1); 
+    applyPIDCentering(currentLeft,currentRight);
   }
-
-  // Calculate steering correction (Degrees)
-  float posDerivative = posError - lastPosError;
-  lastPosError = posError;
-  
-  float steeringCorrection = (Kp_pos * posError) + (Kd_pos * posDerivative);
-  steeringCorrection = constrain(steeringCorrection, -15.0f, 15.0f);
-  
-  // Calculate dynamic target heading
-  float dynamicTargetYaw = targetYaw + steeringCorrection;
-
-  // ==========================================
-  // 2. INNER LOOP: Heading Error
-  // ==========================================
-  // Fast 2ms read to prevent loop stalling
-  float currentYaw = getYaw(2); 
-  
-  float headingError = dynamicTargetYaw - currentYaw;
-  
-  // Shortest path logic (-180 to +180)
-  if (headingError >  180.0f) headingError -= 360.0f;
-  if (headingError < -180.0f) headingError += 360.0f;
-
-  float headingDerivative = headingError - lastHeadingError;
-  lastHeadingError = headingError;
-
-  // Calculate Motor PWM Adjustment
-  float turnAdjustment = (Kp_head * headingError) + (Kd_head * headingDerivative);
-  turnAdjustment = constrain(turnAdjustment, -75, 75);
-
-  // ==========================================
-  // 3. APPLY TO MOTORS
-  // ==========================================
-  // Positive turnAdjustment = Steer Right (Left speeds up, Right slows down)
-  int leftSpeed = BASE_SPEED + turnAdjustment;
-  int rightSpeed = BASE_SPEED - turnAdjustment;
-  
-  // Clamp to prevent stalling or PWM overflow
-  leftSpeed = constrain(leftSpeed, 40, 160);
-  rightSpeed = constrain(rightSpeed, 40, 160);
-
-  // Apply to TB6612FNG (handles reverse if sharply correcting)
-  if(leftSpeed > 0) motor1Forward(leftSpeed); else motor1Reverse(-leftSpeed);
-  if(rightSpeed > 0) motor2Forward(rightSpeed); else motor2Reverse(-rightSpeed);
+  else if(!isWallFront()){
+    int currentLeft = getCorrectedReading(3);
+    int currentRight = getCorrectedReading(1); 
+    applyPIDCentering(currentLeft,currentRight);
+  }
+  else return;
 }
 
 
+void alignToFrontWall() {
+  unsigned long alignedStartTime = 0;
+  bool isFullyAligned = false;
+
+  // --- Tuning Constants ---
+  // Adjust these to change how close it gets and how strict the angle is
+  const int TARGET_PROXIMITY = 100; // Distance to stop at (on your 50-100 mapped scale)
+  const float TARGET_ERROR = 2.0f; // Maximum allowed angle discrepancy
+  const int SETTLE_TIME_MS = 100;  // How long it must hold the perfect pose
+
+  while (!isFullyAligned) {
+    // 1. Grab fresh sensor data
+    int rawFront = getCorrectedReading(0);
+    int rawFront2 = getCorrectedReading(5);
+
+    int frontNormalized = map(rawFront, FRONT_WALL_THRESHOLD, FRONT_MAX, 50, 100);
+    int front2Normalized = map(rawFront2, FRONT2_WALL_THRESHOLD, FRONT2_MAX, 50, 100);
+
+    int avgProximity = (frontNormalized + front2Normalized) / 2;
+    float error = (float)(frontNormalized - front2Normalized);
+
+    // 2. Check if we are at the target distance AND perfectly straight
+    if (avgProximity >= TARGET_PROXIMITY && abs(error) <= TARGET_ERROR) {
+      
+      // If this is the first time we hit the target, start the timer
+      if (alignedStartTime == 0) {
+        alignedStartTime = millis(); 
+      } 
+      // If we've held this perfect alignment for 100ms, we are settled
+      else if (millis() - alignedStartTime > SETTLE_TIME_MS) {
+        isFullyAligned = true; 
+        break; 
+      }
+    } 
+    else {
+      // If the robot slips or overshoots, reset the timer
+      alignedStartTime = 0; 
+    }
+
+    // 3. Call the squaring logic to keep driving/pivoting
+    approachAndSquareUp(rawFront, rawFront2);
+    delay(2); 
+  }
+  motorStop();
+  delay(150); 
+}
+
+
+void approachAndSquareUp(int rawFront, int rawFront2) {
+  // 1. Time delta for a stable derivative
+  static unsigned long lastTime = millis();
+  unsigned long now = millis();
+  float dt = (now - lastTime) / 1000.0f;
+  if (dt <= 0.0f) dt = 0.001f;
+  lastTime = now;
+
+  BT.print("rawFront");BT.println(rawFront);
+  BT.print("rawFront2");BT.println(rawFront2);
+
+  // 2. Map sensor readings to your normalized 50-100 scale
+  int frontNormalized = map(rawFront, FRONT_WALL_THRESHOLD, FRONT_MAX, 50, 100);
+  int front2Normalized = map(rawFront2, FRONT2_WALL_THRESHOLD, FRONT2_MAX, 50, 100);
+
+  BT.print("front1:");BT.println(frontNormalized);
+  BT.print("front2:");BT.println(front2Normalized);
+
+  // 3. Calculate average proximity to the wall (higher = closer)
+  int avgProximity = (frontNormalized + front2Normalized) / 2;
+  BT.print("avgProximity:");BT.println(avgProximity);
+
+  // 4. Calculate alignment error
+  float error = (float)(frontNormalized - front2Normalized);
+  BT.print("error:");BT.println(error);
+
+  static float lastError = 0.0f; 
+  float derivative = (error - lastError) / dt;
+  lastError = error; 
+  
+  float turnAdjustment = (Kp_align * error) + (Kd_align* derivative); 
+  BT.print("turnAdjustment:");BT.println(turnAdjustment);
+  // 5. Determine Forward Speed based on distance
+  int baseSpeed = 40; // Slow, controlled approach speed
+  
+  // If we reach the perfect calibrated distance (100), stop moving forward
+  // and let the turnAdjustment finish squaring up in place.
+  if (avgProximity >= 100) {
+    baseSpeed = 0; 
+  }
+
+  // 6. Apply Differential Steering
+  int leftSpeed = baseSpeed - turnAdjustment; 
+  int rightSpeed = baseSpeed + turnAdjustment;
+  
+  // Clamp the motor outputs to prevent violent speed spikes
+  // We allow negative speeds down to -50 so a wheel can reverse to pivot if needed
+  leftSpeed = constrain(leftSpeed, -50, 80); 
+  rightSpeed = constrain(rightSpeed, -50, 80);
+  BT.print("leftSpeed:");BT.println(leftSpeed);
+  BT.print("rightSpeed:");BT.println(rightSpeed);
+
+  // 7. Safely command the motors using absolute values for reverse
+  motor1Wraper(leftSpeed);
+  motor2Wraper(rightSpeed);
+}
 
 // void squareUp(int rawFront, int rawFront2){
-//   int frontNormalized = map(rawLeft, FRONT_WALL_THRESHOLD, FRONT_MAX, 50, 100);
-//   int front2Normalized = map(rawRight, FRONT2_WALL_THRESHOLD, FRONT2_MAX, 50, 100);
+//   int frontNormalized = map(rawFront, FRONT_WALL_THRESHOLD, FRONT_MAX, 50, 100);
+//   int front2Normalized = map(rawFront2, FRONT2_WALL_THRESHOLD, FRONT2_MAX, 50, 100);
 
-//   float error = frontNormalised - front2Normalised;
+//   float error = frontNormalized - front2Normalized;
 //   static float lastError = 0; 
 //   float derivative  = error - lastError;
 //   lastError = error; 
 //   float turnAdjustment = Kp*error+ Kd*derivative; 
 
-//   motor1Forward(-turnAdjustment); 
-//   motor2Forward(turnAdjustment);
+//   motor1Wraper(-turnAdjustment); 
+//   motor2Wraper(turnAdjustment);
+// }
 
+// --- PID GAINS ---
+// // Outer Loop: Position to Steering Angle (TINY values for raw ADC)
+// float Kp_pos = 0.015;  
+// float Kd_pos = 0.05;   
+
+// // Inner Loop: Heading Angle to Motor PWM (LARGER values for IMU)
+// float Kp_head = 4.0;
+// float Kd_head = 0.5;
+
+// void applyPIDCenteringCascaded(int rawLeft, int rawRight) {
+//   static float lastPosError = 0.0f;
+//   static float lastHeadingError = 0.0f;
+  
+//   const int BASE_SPEED = 100;
+  
+//   bool hasLeftWall = (rawLeft > LEFT_WALL_THRESHOLD);
+//   bool hasRightWall = (rawRight > RIGHT_WALL_THRESHOLD);
+
+//   // ==========================================
+//   // 1. OUTER LOOP: Positional Error
+//   // ==========================================
+//   float posError = 0.0f;
+
+//   if (hasLeftWall && hasRightWall) {
+//     // Both Walls: Balance the raw ADC deviance
+//     float leftDev = rawLeft - LEFT_SETPOINT;
+//     float rightDev = rawRight - RIGHT_SETPOINT;
+//     posError = leftDev - rightDev; // Positive = drifting left
+//   } 
+//   else if (hasLeftWall && !hasRightWall) {
+//     // Left Wall Only
+//     posError = rawLeft - LEFT_SETPOINT;
+//   } 
+//   else if (hasRightWall && !hasLeftWall) {
+//     // Right Wall Only (Negate so drifting right yields negative error)
+//     posError = -(rawRight - RIGHT_SETPOINT);
+//   } 
+//   else {
+//     // No Walls: Trust the IMU
+//     posError = 0.0f;
+//   }
+
+//   // Calculate steering correction (Degrees)
+//   float posDerivative = posError - lastPosError;
+//   lastPosError = posError;
+  
+//   float steeringCorrection = (Kp_pos * posError) + (Kd_pos * posDerivative);
+//   steeringCorrection = constrain(steeringCorrection, -15.0f, 15.0f);
+  
+//   // Calculate dynamic target heading
+//   float dynamicTargetYaw = targetYaw + steeringCorrection;
+
+//   // ==========================================
+//   // 2. INNER LOOP: Heading Error
+//   // ==========================================
+//   // Fast 2ms read to prevent loop stalling
+//   float currentYaw = getYaw(2); 
+  
+//   float headingError = dynamicTargetYaw - currentYaw;
+  
+//   // Shortest path logic (-180 to +180)
+//   if (headingError >  180.0f) headingError -= 360.0f;
+//   if (headingError < -180.0f) headingError += 360.0f;
+
+//   float headingDerivative = headingError - lastHeadingError;
+//   lastHeadingError = headingError;
+
+//   // Calculate Motor PWM Adjustment
+//   float turnAdjustment = (Kp_head * headingError) + (Kd_head * headingDerivative);
+//   turnAdjustment = constrain(turnAdjustment, -75, 75);
+
+//   // ==========================================
+//   // 3. APPLY TO MOTORS
+//   // ==========================================
+//   // Positive turnAdjustment = Steer Right (Left speeds up, Right slows down)
+//   int leftSpeed = BASE_SPEED + turnAdjustment;
+//   int rightSpeed = BASE_SPEED - turnAdjustment;
+  
+//   // Clamp to prevent stalling or PWM overflow
+//   leftSpeed = constrain(leftSpeed, 40, 160);
+//   rightSpeed = constrain(rightSpeed, 40, 160);
+
+//   // Apply to TB6612FNG (handles reverse if sharply correcting)
+//   if(leftSpeed > 0) motor1Forward(leftSpeed); else motor1Reverse(-leftSpeed);
+//   if(rightSpeed > 0) motor2Forward(rightSpeed); else motor2Reverse(-rightSpeed);
 // }

@@ -23,6 +23,10 @@ void loop() {
     if (incomingChar == 'f') {
       centerUntilDistance(100);
     }
+
+    if (incomingChar == 'a') {
+      alignToFrontWall();
+    }
     
     if (incomingChar == 'Y') {
       BT.println(getYaw(15));
@@ -31,24 +35,24 @@ void loop() {
     if (incomingChar == 'p') {
       BT.print("\nEnter KP  value: ");
       while (BT.available() == 0) { delay(1); }
-      Kp= BT.parseFloat(); 
+      Kp_align= BT.parseFloat(); 
       BT.print("\nKP  value: "); 
-      BT.println(Kp);
+      BT.println(Kp_align);
     }
     
     if (incomingChar == 'd') {
       BT.print("\nEnter KD value: "); 
       while (BT.available() == 0) { delay(1); }
-      Kd = BT.parseFloat(); 
+      Kd_align = BT.parseFloat(); 
       BT.print("\nKD value: "); 
-      BT.println(Kd);
+      BT.println(Kd_align);
     }
 
     if (incomingChar == 'i') {
       BT.print("\nEnter KI value: "); 
       while (BT.available() == 0) { delay(1); }
       Ki = BT.parseFloat(); 
-      BT.print("\nKi value: "); 
+      BT.print("\nKi value: ");
       BT.println(Ki);
     }
     
@@ -74,10 +78,15 @@ void loop() {
 void rightWallFollow() { 
  if (!isWallRight()) {
     turn(-90.0f);
-    delay(5);  
+    delay(5);
+    if(!isWallFront()){
+      centerUntilDistance(25);
+      centerUntilWall();
+    }
   }
   else if (!isWallFront()) {
-    centerUntilDistance(21.25);
+    centerUntilWall();
+    centerUntilDistance(15);
   }
   else if (!isWallLeft()) {
     turn(90.0f);
@@ -95,7 +104,7 @@ void leftWallFollow() {
     delay(5);  
   }
   else if (!isWallFront()) {
-    centerUntilDistance(21.25);
+    centerUntilWall();
   }
   else if (!isWallRight()) {
     turn(-90.0f);
