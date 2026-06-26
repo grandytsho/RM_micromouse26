@@ -4,6 +4,11 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+
+void rightWallFollow();
+void leftWallFollow();
+
+
 void setup() {
   inithardware();
   BT.print("available");
@@ -35,17 +40,17 @@ void loop() {
     if (incomingChar == 'p') {
       BT.print("\nEnter KP  value: ");
       while (BT.available() == 0) { delay(1); }
-      Kp_align= BT.parseFloat(); 
+      Kp= BT.parseFloat(); 
       BT.print("\nKP  value: "); 
-      BT.println(Kp_align);
+      BT.println(Kp);
     }
     
     if (incomingChar == 'd') {
       BT.print("\nEnter KD value: "); 
       while (BT.available() == 0) { delay(1); }
-      Kd_align = BT.parseFloat(); 
+      Kd = BT.parseFloat(); 
       BT.print("\nKD value: "); 
-      BT.println(Kd_align);
+      BT.println(Kd);
     }
 
     if (incomingChar == 'i') {
@@ -75,29 +80,76 @@ void loop() {
   } // <-- This brace closes the if(BT.available() > 0) statement
 }
 
-void rightWallFollow() { 
- if (!isWallRight()) {
+void rightWallFollow(){
+  if(!isWallRight()){
+    BT.println("no right wall, turning right"); 
+    delay(500);
     turn(-90.0f);
     delay(5);
     if(!isWallFront()){
+      BT.println("moving straight after right turn");
+      delay(500); 
       centerUntilDistance(25);
-      centerUntilWall();
     }
   }
-  else if (!isWallFront()) {
-    centerUntilWall();
-    centerUntilDistance(15);
-  }
-  else if (!isWallLeft()) {
-    turn(90.0f);
+  else if(!isWallFront()){
+    BT.println("no front, wall moving forward");
+    delay(500); 
+    centerUntilDistance(25);
     delay(5);
   }
-  else {
+  else if(!isWallLeft()){
+    BT.println("front and right wall, turning left");
+    delay(500);
+    turn(90.0);
+    delay(5);
+    if(!isWallFront()){
+      BT.println("moving forward after left turn");
+      delay(500); 
+      centerUntilDistance(25); 
+    }
+  }
+  else{
+    BT.println("dead end, U-turn");
+    delay(500);
     turn(180.0f);
     delay(5);
+    if(!isWallFront()){
+      BT.println("moving forward after U-turn");
+      delay(50); 
+      centerUntilDistance(25); 
+    }
   }
-  delay(5);
+
+  BT.print("Right:");BT.println(isWallRight());
+  BT.print("Left:");BT.println(isWallLeft());
+  BT.print("Front:");BT.println(isWallFront());
+
 }
+
+// void rightWallFollow() { 
+//  if (!isWallRight()) {
+//     turn(-90.0f);
+//     delay(5);
+//     if(!isWallFront()){
+//       centerUntilDistance(25);
+//       centerUntilWall();
+//     }
+//   }
+//   else if (!isWallFront()) {
+//     centerUntilWall();
+//     centerUntilDistance(15);
+//   }
+//   else if (!isWallLeft()) {
+//     turn(90.0f);
+//     delay(5);
+//   }
+//   else {
+//     turn(180.0f);
+//     delay(5);
+//   }
+//   delay(5);
+// }
 void leftWallFollow() { 
  if (!isWallLeft()) {
     turn(90.0f);
