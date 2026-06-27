@@ -80,76 +80,94 @@ void loop() {
   } // <-- This brace closes the if(BT.available() > 0) statement
 }
 
-void rightWallFollow(){
-  if(!isWallRight()){
-    BT.println("no right wall, turning right"); 
-    delay(500);
-    turn(-90.0f);
-    delay(5);
-    if(!isWallFront()){
-      BT.println("moving straight after right turn");
-      delay(500); 
-      centerUntilDistance(25);
-    }
-  }
-  else if(!isWallFront()){
-    BT.println("no front, wall moving forward");
-    delay(500); 
-    centerUntilDistance(25);
-    delay(5);
-  }
-  else if(!isWallLeft()){
-    BT.println("front and right wall, turning left");
-    delay(500);
-    turn(90.0);
-    delay(5);
-    if(!isWallFront()){
-      BT.println("moving forward after left turn");
-      delay(500); 
-      centerUntilDistance(25); 
-    }
-  }
-  else{
-    BT.println("dead end, U-turn");
-    delay(500);
-    turn(180.0f);
-    delay(5);
-    if(!isWallFront()){
-      BT.println("moving forward after U-turn");
-      delay(50); 
-      centerUntilDistance(25); 
-    }
-  }
-
-  BT.print("Right:");BT.println(isWallRight());
-  BT.print("Left:");BT.println(isWallLeft());
-  BT.print("Front:");BT.println(isWallFront());
-
-}
-
-// void rightWallFollow() { 
-//  if (!isWallRight()) {
+// void rightWallFollow(){
+//   if(!isWallRight()){
+//     BT.println("no right wall, turning right"); 
+//     delay(250);
 //     turn(-90.0f);
 //     delay(5);
 //     if(!isWallFront()){
+//       BT.println("moving straight after right turn");
+//       delay(250); 
 //       centerUntilDistance(25);
-//       centerUntilWall();
 //     }
 //   }
-//   else if (!isWallFront()) {
-//     centerUntilWall();
-//     centerUntilDistance(15);
-//   }
-//   else if (!isWallLeft()) {
-//     turn(90.0f);
+//   else if(!isWallFront()){
+//     BT.println("no front, wall moving forward");
+//     delay(250); 
+//     centerUntilDistance(25);
 //     delay(5);
 //   }
-//   else {
+//   else if(!isWallLeft()){
+//     BT.println("front and right wall, turning left");
+//     delay(250);
+//     turn(90.0);
+//     delay(5);
+//     if(!isWallFront()){
+//       BT.println("moving forward after left turn");
+//       delay(250); 
+//       centerUntilDistance(25); 
+//     }
+//   }
+//   else{
+//     delay(500);
 //     turn(180.0f);
 //     delay(5);
+//     if(!isWallFront()){
+//       BT.println("moving forward after U-turn");
+//       delay(50); 
+//       centerUntilDistance(25); 
+//     }
 //   }
-//   delay(5);
+
+//   BT.print("Right:");BT.println(isWallRight());
+//   BT.print("Left:");BT.println(isWallLeft());
+//   BT.print("Front:");BT.println(isWallFront());
+
 // }
+
+void rightWallFollow() { 
+  //Turn right
+  if (!isWallRight()) {
+    BT.println("NO RIGHT WALL");
+    motorStop();
+    delay(1000);
+    centerUntilDistance(12);
+    motorStop();
+    delay(1000);
+    turn(-90.0f);
+    centerUntilDistance(25);
+    delay(5);
+  }
+  //Drive forward using PID
+  else if (!isWallFront()) {
+    int currentLeft = getCorrectedReading(3);
+    int currentRight = getCorrectedReading(1); 
+    BT.print("Front1: ");BT.println(getCorrectedReading(0));
+    BT.print("Front2: ");BT.println(getCorrectedReading(5));
+    applyPIDCentering(currentLeft, currentRight);
+  }
+  // Turn left
+  else if (!isWallLeft()) {
+    motorStop();
+    turn(90.0f);
+    centerUntilDistance(25);
+    delay(5);
+  }
+  //U-Turn
+  else {
+    BT.println("dead end, U-turn");
+    motorStop();
+    turn(180.0f);
+    delay(5);
+  }
+  
+  delay(5);
+  // BT.print("Right:");BT.println(isWallRight());
+  // BT.print("Left:");BT.println(isWallLeft());
+  // BT.print("Front:");BT.println(isWallFront());
+}
+
 void leftWallFollow() { 
  if (!isWallLeft()) {
     turn(90.0f);

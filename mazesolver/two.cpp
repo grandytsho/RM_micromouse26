@@ -16,8 +16,8 @@ float Kd_align = 0.01;
 
 float targetYaw = 0;
 int TURN_THRESHOLD = 10; 
-const float IMU_SCALE        = 1.0f;  // 1° heading drift → 2 normalized units; tune this
-const float BOTH_WALL_BLEND  = 0.85f; // weight given to walls when both present
+const float IMU_SCALE        = 1.0f; 
+const float BOTH_WALL_BLEND  = 0.85f;
 const float ONE_WALL_BLEND   = 0.60f;
 
 static unsigned long _approach_lastTime  = 0;
@@ -31,8 +31,8 @@ int RIGHT_SETPOINT = 469;
 int RIGHT_MAX = 905;
 int LEFT_WALL_THRESHOLD = 360; 
 int RIGHT_WALL_THRESHOLD = 320;
-int FRONT_WALL_THRESHOLD = 177;
-int FRONT2_WALL_THRESHOLD = 231;
+int FRONT_WALL_THRESHOLD = 333;
+int FRONT2_WALL_THRESHOLD = 246;
 
 int FRONT_MAX = 416; 
 int FRONT2_MAX = 576; 
@@ -52,7 +52,6 @@ void motor1Forward(int speed) {
 void motor1Reverse(int speed) {
   digitalWrite(M1_IN1, HIGH);
   digitalWrite(M1_IN2, LOW);
-  // No PWM inversion needed for the TB6612!
   analogWrite(M1_PWM, speed);
 }
 
@@ -65,7 +64,6 @@ void motor2Forward(int speed) {
 void motor2Reverse(int speed) {
   digitalWrite(M2_IN1, LOW);
   digitalWrite(M2_IN2, HIGH);
-  // No PWM inversion needed for the TB6612!
   analogWrite(M2_PWM, speed);
 }
 
@@ -257,7 +255,7 @@ void applyPIDCentering(int rawLeft, int rawRight) {
     if (headingError >  180.0f) headingError -= 360.0f;
     if (headingError < -180.0f) headingError += 360.0f;
     
-    error = headingError * IMU_SCALE;
+    error = -headingError * IMU_SCALE;
   }
 
   // E. Smart Integral Logic (Anti-Windup)
@@ -287,6 +285,10 @@ void applyPIDCentering(int rawLeft, int rawRight) {
   int leftSpeed = BASE_SPEED + turnAdjustment;
   int rightSpeed = BASE_SPEED - turnAdjustment;
   
+  if(isWallFront()) 
+  { BT.println("Front wall detected in PID loop"); 
+    motorStop();return;} // check for walls before giving PWM
+
   leftSpeed = constrain(leftSpeed, 60, 140);
   rightSpeed = constrain(rightSpeed, 60, 140);
 
