@@ -15,12 +15,12 @@ const int emitterPins[NUM_SENSORS] = {23, 41, 24, 21, 15, 39};
 const int sensorPins[NUM_SENSORS]  = {22, 40, 25, 20, 14, 38};
 
 const char* sensorNames[NUM_SENSORS] = {
-  "Front 2  ", // Sens: 22, Emit: 23
+  "Front   ", // Sens: 22, Emit: 23
   "Right    ", // Sens: 40, Emit: 41
   "Front Rgt", // Sens: 25, Emit: 24
   "Left     ", // Sens: 20, Emit: 21
   "Front Lft", // Sens: 14, Emit: 15
-  "Front    "  // Sens: 38, Emit: 39
+  "Front 2   "  // Sens: 38, Emit: 39
 };
 
 const int ALGOPIN = 29;
@@ -164,7 +164,7 @@ void inithardware(){
   Wire1.begin();
   Serial.begin(115200); 
 
-  BT.begin(115200);
+  BT.begin(9600);
   
   while (!Serial && millis() < 2000); 
 

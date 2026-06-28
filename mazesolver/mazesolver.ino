@@ -80,63 +80,15 @@ void loop() {
   } // <-- This brace closes the if(BT.available() > 0) statement
 }
 
-
-
-// void rightWallFollow(){
-//   if(!isWallRight()){
-//     BT.println("no right wall, turning right"); 
-//     delay(250);
-//     turn(-90.0f);
-//     delay(5);
-//     if(!isWallFront()){
-//       BT.println("moving straight after right turn");
-//       delay(250); 
-//       centerUntilDistance(25);
-//     }
-//   }
-//   else if(!isWallFront()){
-//     BT.println("no front, wall moving forward");
-//     delay(250); 
-//     centerUntilDistance(25);
-//     delay(5);
-//   }
-//   else if(!isWallLeft()){
-//     BT.println("front and right wall, turning left");
-//     delay(250);
-//     turn(90.0);
-//     delay(5);
-//     if(!isWallFront()){
-//       BT.println("moving forward after left turn");
-//       delay(250); 
-//       centerUntilDistance(25); 
-//     }
-//   }
-//   else{
-//     delay(500);
-//     turn(180.0f);
-//     delay(5);
-//     if(!isWallFront()){
-//       BT.println("moving forward after U-turn");
-//       delay(50); 
-//       centerUntilDistance(25); 
-//     }
-//   }
-
-//   BT.print("Right:");BT.println(isWallRight());
-//   BT.print("Left:");BT.println(isWallLeft());
-//   BT.print("Front:");BT.println(isWallFront());
-
-// }
-
 void rightWallFollow() { 
   //Turn right
   if (!isWallRight()) {
     BT.println("NO RIGHT WALL");
+    // motorStop();
+    // delay(1000);
+    centerUntilDistance(13);
     motorStop();
-    delay(1000);
-    centerUntilDistance(12);
-    motorStop();
-    delay(1000);
+    delay(5);
     turn(-90.0f);
     centerUntilDistance(25);
     delay(5);
@@ -152,8 +104,8 @@ void rightWallFollow() {
     BT.println("turning Left");
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
-    motorStop();
-    delay(1000);
+    centerUntilDistance(2);
+    delay(5);
     turn(90.0f);
     centerUntilDistance(25);
     delay(5);
@@ -162,7 +114,7 @@ void rightWallFollow() {
   else {
     BT.println("dead end, U-turn");
     motorStop();
-    delay(1000);
+    delay(5);
     turn(180.0f);
     delay(5);
   }
@@ -173,51 +125,34 @@ void rightWallFollow() {
   // BT.print("Front:");BT.println(isWallFront());
 }
 
-// void leftWallFollow() { 
-//  if (!isWallLeft()) {
-//     turn(90.0f);
-//     delay(5);  
-//   }
-//   else if (!isWallFront()) {
-//     centerUntilWall();
-//   }
-//   else if (!isWallRight()) {
-//     turn(-90.0f);
-//     delay(5);
-//   }
-//   else {
-//     turn(180.0f);
-//     delay(5);
-//   }
-//   delay(5);
-// }
-
-void rightWallFollow() { 
-  //Turn right
-  if (!isWallRight()) {
-    BT.println("NO RIGHT WALL");
+void leftWallFollow() { 
+  //Turn left
+  if (!isWallLeft()) {
+    BT.println("NO Left WALL|Left reading: "); BT.println(getCorrectedReading(3));
+    // motorStop();
+    // delay(1000);
+    centerUntilDistance(13);
     motorStop();
-    delay(1000);
-    centerUntilDistance(12);
-    motorStop();
-    delay(1000);
+    delay(5);
     turn(90.0f);
     centerUntilDistance(25);
     delay(5);
   }
   //Drive forward using PID
   else if (!isWallFront()) {
+    BT.print("Front1: ");BT.println(getCorrectedReading(5));
+    BT.print("Front2: ");BT.println(getCorrectedReading(0));
     int currentLeft = getCorrectedReading(3);
     int currentRight = getCorrectedReading(1); 
     applyPIDCentering(currentLeft, currentRight);
   }
-  // Turn left
-  else if (!isWallLeft()) {
-    BT.println("turning Left");
+  // Turn right
+  else if (!isWallRight()) {
+    BT.println("turning Right");
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
-    motorStop();
-    delay(1000);
+    centerUntilDistance(2); 
+    delay(5);
     turn(-90.0f);
     centerUntilDistance(25);
     delay(5);
@@ -225,8 +160,10 @@ void rightWallFollow() {
   //U-Turn
   else {
     BT.println("dead end, U-turn");
+    BT.print("Front1: ");BT.println(getCorrectedReading(5)); 
+    BT.print("Front2: ");BT.println(getCorrectedReading(0)); 
     motorStop();
-    delay(1000);
+    delay(5);
     turn(180.0f);
     delay(5);
   }

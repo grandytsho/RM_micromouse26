@@ -25,11 +25,11 @@ static float         _approach_lastError = NAN;
 static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 460;
-int LEFT_MAX = 868;
-int RIGHT_SETPOINT = 469;
-int RIGHT_MAX = 905;
-int LEFT_WALL_THRESHOLD = 360; 
+int LEFT_SETPOINT = 466;
+int LEFT_MAX = 872;
+int RIGHT_SETPOINT = 464;
+int RIGHT_MAX = 900;
+int LEFT_WALL_THRESHOLD = 345; 
 int RIGHT_WALL_THRESHOLD = 320;
 int FRONT_WALL_THRESHOLD = 324;
 int FRONT2_WALL_THRESHOLD = 330;
@@ -211,7 +211,7 @@ void applyPIDCentering(int rawLeft, int rawRight) {
   static bool wasUsingIMU = false; 
   static unsigned long lastTime = millis();
 
-  const int BASE_SPEED = 100; 
+  const int BASE_SPEED = 150; 
   const float IMU_SCALE = 5.0f; 
   
   unsigned long now = millis();
@@ -289,8 +289,8 @@ void applyPIDCentering(int rawLeft, int rawRight) {
   { BT.println("Front wall detected in PID loop"); 
     motorStop();return;} // check for walls before giving PWM
 
-  leftSpeed = constrain(leftSpeed, 60, 140);
-  rightSpeed = constrain(rightSpeed, 60, 140);
+  leftSpeed = constrain(leftSpeed, 110, 190);
+  rightSpeed = constrain(rightSpeed, 110, 190);
 
   // Motors are driven purely by the baseline speed and PID output
   motor1Forward(leftSpeed);
@@ -308,7 +308,7 @@ void centerUntilDistance(float dist){
       applyPIDCentering(currentLeft,currentRight); 
     }
     else{
-      motorStop();
+      // motorStop(); <-- add an if statement for this later
       BT.print("KP value: ");BT.println(Kp);
       BT.print("KD value: ");BT.println(Kd); 
       break; 
