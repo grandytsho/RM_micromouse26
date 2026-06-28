@@ -31,8 +31,8 @@ int RIGHT_SETPOINT = 469;
 int RIGHT_MAX = 905;
 int LEFT_WALL_THRESHOLD = 360; 
 int RIGHT_WALL_THRESHOLD = 320;
-int FRONT_WALL_THRESHOLD = 333;
-int FRONT2_WALL_THRESHOLD = 246;
+int FRONT_WALL_THRESHOLD = 324;
+int FRONT2_WALL_THRESHOLD = 330;
 
 int FRONT_MAX = 416; 
 int FRONT2_MAX = 576; 
@@ -114,7 +114,7 @@ bool isWallFront(){
 }
 void turn(float angleDeg){
   const int   upper         = 110;
-  const int   lower         = 23;
+  const int   lower         = 30;
   const float turnThreshold = 0.25f;   // degrees — slightly relaxed for stability
   const float DERIV_ALPHA   = 0.25f;   // EMA weight for new sample (lower = smoother)
   const float DT_FLOOR      = 0.004f;  // FIX 1: 4 ms floor matches delay(5) reality

@@ -7,7 +7,7 @@
 
 void rightWallFollow();
 void leftWallFollow();
-
+bool isStarted = false; 
 
 void setup() {
   inithardware();
@@ -18,7 +18,7 @@ void loop() {
   if (BT.available() > 0) {
     char incomingChar = BT.read();
     BT.println(incomingChar);
-    // Ignore stray invisible characters from the Serial Monitor
+    //Ignore stray invisible characters from the Serial Monitor
     if (incomingChar == '\n' || incomingChar == '\r') {
       return; 
     }
@@ -79,6 +79,8 @@ void loop() {
     }
   } // <-- This brace closes the if(BT.available() > 0) statement
 }
+
+
 
 // void rightWallFollow(){
 //   if(!isWallRight()){
@@ -143,13 +145,15 @@ void rightWallFollow() {
   else if (!isWallFront()) {
     int currentLeft = getCorrectedReading(3);
     int currentRight = getCorrectedReading(1); 
-    BT.print("Front1: ");BT.println(getCorrectedReading(0));
-    BT.print("Front2: ");BT.println(getCorrectedReading(5));
     applyPIDCentering(currentLeft, currentRight);
   }
   // Turn left
   else if (!isWallLeft()) {
+    BT.println("turning Left");
+    BT.print("Front1: ");BT.println(getCorrectedReading(5));
+    BT.print("Front2: ");BT.println(getCorrectedReading(0));
     motorStop();
+    delay(1000);
     turn(90.0f);
     centerUntilDistance(25);
     delay(5);
@@ -158,6 +162,7 @@ void rightWallFollow() {
   else {
     BT.println("dead end, U-turn");
     motorStop();
+    delay(1000);
     turn(180.0f);
     delay(5);
   }
@@ -168,21 +173,66 @@ void rightWallFollow() {
   // BT.print("Front:");BT.println(isWallFront());
 }
 
-void leftWallFollow() { 
- if (!isWallLeft()) {
+// void leftWallFollow() { 
+//  if (!isWallLeft()) {
+//     turn(90.0f);
+//     delay(5);  
+//   }
+//   else if (!isWallFront()) {
+//     centerUntilWall();
+//   }
+//   else if (!isWallRight()) {
+//     turn(-90.0f);
+//     delay(5);
+//   }
+//   else {
+//     turn(180.0f);
+//     delay(5);
+//   }
+//   delay(5);
+// }
+
+void rightWallFollow() { 
+  //Turn right
+  if (!isWallRight()) {
+    BT.println("NO RIGHT WALL");
+    motorStop();
+    delay(1000);
+    centerUntilDistance(12);
+    motorStop();
+    delay(1000);
     turn(90.0f);
-    delay(5);  
-  }
-  else if (!isWallFront()) {
-    centerUntilWall();
-  }
-  else if (!isWallRight()) {
-    turn(-90.0f);
+    centerUntilDistance(25);
     delay(5);
   }
+  //Drive forward using PID
+  else if (!isWallFront()) {
+    int currentLeft = getCorrectedReading(3);
+    int currentRight = getCorrectedReading(1); 
+    applyPIDCentering(currentLeft, currentRight);
+  }
+  // Turn left
+  else if (!isWallLeft()) {
+    BT.println("turning Left");
+    BT.print("Front1: ");BT.println(getCorrectedReading(5));
+    BT.print("Front2: ");BT.println(getCorrectedReading(0));
+    motorStop();
+    delay(1000);
+    turn(-90.0f);
+    centerUntilDistance(25);
+    delay(5);
+  }
+  //U-Turn
   else {
+    BT.println("dead end, U-turn");
+    motorStop();
+    delay(1000);
     turn(180.0f);
     delay(5);
   }
+  
   delay(5);
+  // BT.print("Right:");BT.println(isWallRight());
+  // BT.print("Left:");BT.println(isWallLeft());
+  // BT.print("Front:");BT.println(isWallFront());
 }

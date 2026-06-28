@@ -164,7 +164,7 @@ void inithardware(){
   Wire1.begin();
   Serial.begin(115200); 
 
-  BT.begin(9600);
+  BT.begin(115200);
   
   while (!Serial && millis() < 2000); 
 
