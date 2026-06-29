@@ -12,6 +12,9 @@ extern float Ki_turn;
 extern int upper;
 extern int lower;
 
+extern float Kp_align;
+extern float Kd_align;
+
 extern int LEFT_SETPOINT;
 extern int LEFT_MAX;
 
@@ -32,5 +35,8 @@ bool isWallFront();
 void turn(float angleDeg);
 void applyPIDCentering(int rawLeft, int rawRight);
 void centerUntilDistance(float dist);
+void centerUntilWall();
+void alignToFrontWall();
+void approachAndSquareUp(int rawFront, int rawFront2);
 
 #endif
