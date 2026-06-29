@@ -1,44 +1,70 @@
-// #include "one.h"
-// #include "two.h"
-// #include <EEPROM.h>
-// #include <Arduino.h>
-// #include <Wire.h>
+#include "one.h"
+#include "two.h"
+#include <Arduino.h>
+#include <Wire.h>
+#include <queue>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include <string>
 
-// const int MAZE_SIZE = 6;
 
-// struct Cell {
-//     int distance; 
-//     bool left = false, right = false, up = false, down = false;
-//     bool visited = false;
-//     int f = 9999;//total
-//     int g = 9999;//normal cost
-//     int h = 9999;//juristic cost
-//     int parent_x = -1;
-//     int parent_y = -1;
-//     bool closed = false;
-// };
+const int MAZE_SIZE = 6;
+const int straight_cost = 1; 
+const int turn_cost = 2; 
 
-// struct Pos {
-//     int x, y;
-// }; 
+enum heading { North = 0, East, South, West };
 
-// struct AStarNode {
-//     int x, y, f, h;
-//     bool operator>(const AStarNode& other) const {
-//         if (f == other.f) return h > other.h;
-//         return f > other.f;
-//     }
-// };
+struct Cell {
+    int distance; 
+    bool left = false, right = false, up = false, down = false;
+    bool visited = false;
+    int f = 9999;
+    int g = 9999;
+    int h = 9999;
+    int parent_x = -1;
+    int parent_y = -1;
+    bool closed = false;
+};
 
-// enum heading {North = 0 , East, South, West} ;
+struct Pos {
+    int x, y;
+}; 
 
-// void turnTo(int target_heading); 
-// void copyMap(); 
-// std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]);
-// void closeAll(Cell maze[MAZE_SIZE][MAZE_SIZE]); 
-// void executeDiagonalSpeedrun(const std::vector<int>& path); 
-// void floodfill();
-// void calculateCost(std::vector<int> best_path);
-// bool updateMap();
-// void mousemove();
-// int executeFloodFill();
+struct AStarNode {
+    int x, y, f, h;
+    heading dir; 
+    bool operator>(const AStarNode& other) const {
+        if (f == other.f) return h > other.h;
+        return f > other.f;
+    }
+};
+
+
+extern int cur_x; 
+extern int cur_y; 
+extern int start_x; 
+extern int start_y; 
+extern int goal_x; 
+extern int goal_y; 
+
+extern Cell maze[MAZE_SIZE][MAZE_SIZE]; 
+extern Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
+extern heading current_heading;
+extern bool returning_to_start;
+extern int cells_visited;
+extern int times_moved;
+extern bool speedrun;
+
+
+void turnTo(int target_heading); 
+void copyMap(); 
+void floodfill();
+void calculateCost(std::vector<int> best_path);
+bool updateMap();
+void mousemove();
+void closeAll(Cell maze[MAZE_SIZE][MAZE_SIZE]); 
+std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]);
+void moveNormal(std::vector<int> path);
+int executeFloodFill();
+

@@ -1,5 +1,6 @@
 #include "one.h"
 #include "two.h"
+#include "floodFill.h"
 #include <EEPROM.h>
 #include <Arduino.h>
 #include <Wire.h>
@@ -76,6 +77,10 @@ void loop() {
       while(true){
         leftWallFollow();
       }
+    }
+    if(incomingChar == 'x'){
+      BT.println("Starting floodfill"); 
+      executeFloodFill(); 
     }
   } // <-- This brace closes the if(BT.available() > 0) statement
 }
