@@ -24,6 +24,8 @@ extern int LEFT_WALL_THRESHOLD;
 extern int RIGHT_WALL_THRESHOLD;
 extern int TURN_THRESHOLD;
 
+extern int BASE_SPEED;
+
 void motorStop();
 void motor1Forward(int speed);
 void motor2Forward(int speed);
@@ -32,6 +34,7 @@ void motor2Reverse(int speed);
 bool isWallLeft();
 bool isWallRight();
 bool isWallFront();
+bool isWallFrontCollision();
 void turn(float angleDeg);
 void applyPIDCentering(int rawLeft, int rawRight);
 void centerUntilDistance(float dist);

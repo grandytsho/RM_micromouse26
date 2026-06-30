@@ -27,7 +27,10 @@ void loop() {
     BT.print(incomingChar);
 
     if (incomingChar == 'f') {
-      centerUntilDistance(100);
+      BT.print("\nEnter distance value: ");
+      while(BT.available() == 0){delay(1);}
+      float dist = BT.parseFloat(); 
+      centerUntilDistance(dist);
     }
 
     if (incomingChar == 'a') {
@@ -61,6 +64,14 @@ void loop() {
       BT.print("\nKi value: ");
       BT.println(Ki);
     }
+
+    if(incomingChar == 'c'){
+      BT.print("\nEnter distance value: "); 
+      while (BT.available() == 0) { delay(1); }
+      distance = BT.parseFloat(); 
+      BT.print("\ndistance value: ");
+      BT.println(distance);
+    }
     
     if (incomingChar == 't') {
       turn(-90);
@@ -82,6 +93,14 @@ void loop() {
       BT.println("Starting floodfill"); 
       executeFloodFill(); 
     }
+
+    if(incomingChar == 'b'){
+      BT.print("\nEnter base speed: "); 
+      while (BT.available() == 0) { delay(1); }
+      BASE_SPEED = BT.parseInt();
+      BT.print("\nBase Speed: ");
+      BT.println(BASE_SPEED);
+    }
   } // <-- This brace closes the if(BT.available() > 0) statement
 }
 
@@ -99,7 +118,7 @@ void rightWallFollow() {
     delay(5);
   }
   //Drive forward using PID
-  else if (!isWallFront()) {
+  else if (!isWallFrontCollision()) {
     int currentLeft = getCorrectedReading(3);
     int currentRight = getCorrectedReading(1); 
     applyPIDCentering(currentLeft, currentRight);
@@ -112,7 +131,7 @@ void rightWallFollow() {
     centerUntilDistance(2);
     delay(5);
     turn(90.0f);
-    centerUntilDistance(25);
+    centerUntilDistance(12);
     delay(5);
   }
   //U-Turn
@@ -144,7 +163,7 @@ void leftWallFollow() {
     delay(5);
   }
   //Drive forward using PID
-  else if (!isWallFront()) {
+  else if (!isWallFrontCollision()) {
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
     int currentLeft = getCorrectedReading(3);

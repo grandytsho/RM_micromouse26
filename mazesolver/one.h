@@ -17,6 +17,7 @@ float getRightDiagonal();
 float getCorrectedReading(int sensorNum);
 float getCorrectedReadingAvg(int sensorNum);
 
+
 //pins
 extern const int sensorPins[];
 extern const uint8_t EC_1A ; 

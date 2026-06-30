@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <string>
 
+extern float distance;
 
 const int MAZE_SIZE = 6;
 const int straight_cost = 1; 

@@ -1,12 +1,14 @@
 #include "floodFill.h"
 
+float distance = 25; 
+
 int cur_x = 0; 
 int cur_y = 0; 
 int start_x = 0; 
 int start_y = 0; 
 
 int goal_x = 3; 
-int goal_y = 3; 
+int goal_y = 2; 
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
@@ -102,17 +104,27 @@ bool updateMap() {
     bool mapUpdated = false;
     bool n = false, s = false, e = false, w = false; 
 
+    // 1. Log current position and raw sensor data
+    BT.print("updateMap at (");
+    BT.print(cur_x); BT.print(","); BT.print(cur_y);
+    BT.print(") | Heading: ");
+    BT.println(current_heading);
+    BT.println("Sensors -> L: " + String(left) + " | F: " + String(front) + " | R: " + String(right));
+
+    // 2. Translate relative sensors to absolute cardinal directions
     if(current_heading == North) { n = front; e = right; w = left; }
     else if(current_heading == South) { s = front; e = left; w = right; }
     else if(current_heading == East) { e = front; n = left; s = right; }
     else if(current_heading == West) { w = front; n = right; s = left; }
 
+    // 3. Update the maze arrays and log ONLY newly discovered walls
     if(n && !maze[cur_x][cur_y].up) {
         maze[cur_x][cur_y].up = true; 
         if((cur_y < (MAZE_SIZE - 1)) && !maze[cur_x][cur_y+1].down) {
             maze[cur_x][cur_y+1].down = true; 
         }
         mapUpdated = true; 
+        BT.println("  -> Discovered NEW Wall: NORTH");
     }
     if(s && !maze[cur_x][cur_y].down) {
         maze[cur_x][cur_y].down = true; 
@@ -120,6 +132,7 @@ bool updateMap() {
             maze[cur_x][cur_y-1].up = true; 
         }
         mapUpdated = true; 
+        BT.println("  -> Discovered NEW Wall: SOUTH");
     }
     if(e && !maze[cur_x][cur_y].right) {
         maze[cur_x][cur_y].right = true; 
@@ -127,6 +140,7 @@ bool updateMap() {
             maze[cur_x+1][cur_y].left = true; 
         }
         mapUpdated = true; 
+        BT.println("  -> Discovered NEW Wall: EAST");
     }
     if(w && !maze[cur_x][cur_y].left) {
         maze[cur_x][cur_y].left = true; 
@@ -134,7 +148,16 @@ bool updateMap() {
             maze[cur_x-1][cur_y].right = true; 
         }
         mapUpdated = true; 
+        BT.println("  -> Discovered NEW Wall: WEST");
     }
+
+    // 4. Log if the map state actually changed
+    if(mapUpdated) {
+        BT.println("Map changed! Requesting new floodfill...");
+    } else {
+        BT.println("No new walls found.");
+    }
+
     return mapUpdated;
 }
 
@@ -153,7 +176,8 @@ void mousemove() {
         if(dist < min_dist) {   
             min_dist = dist; 
             v.clear();
-            v.push_back(North); 
+            v.push_back(North);
+            BT.println("Heading North");
         }
     }
     if(!maze[cur_x][cur_y].down && cur_y > 0) {
@@ -161,7 +185,8 @@ void mousemove() {
         if(dist < min_dist) {   
             min_dist = dist; 
             v.clear();
-            v.push_back(South); 
+            v.push_back(South);
+            BT.println("Heading South");
         }
     }
     if(!maze[cur_x][cur_y].right && cur_x < (MAZE_SIZE - 1)) {
@@ -169,7 +194,8 @@ void mousemove() {
         if(dist < min_dist) {   
             min_dist = dist; 
             v.clear();
-            v.push_back(East); 
+            v.push_back(East);
+            BT.println("Heading East");
         }
     }
     if(!maze[cur_x][cur_y].left && cur_x > 0) {
@@ -177,7 +203,8 @@ void mousemove() {
         if(dist < min_dist) {   
             min_dist = dist; 
             v.clear();
-            v.push_back(West); 
+            v.push_back(West);
+            BT.println("Heading West");
         }
     }
 
@@ -197,7 +224,7 @@ void mousemove() {
     turnTo(target_heading);
     
 
-    centerUntilDistance(25);
+    centerUntilDistance(distance);
     times_moved++; 
     
     if (current_heading == North) cur_y++;
@@ -323,7 +350,7 @@ void moveNormal(std::vector<int> path) {
     for(size_t i = 0; i < path.size(); i++){
         turnTo(path[i]); 
         current_heading = (heading)path[i]; 
-        centerUntilDistance(25); 
+        centerUntilDistance(distance); 
     }
 }
 
@@ -336,7 +363,8 @@ int executeFloodFill() {
         if(updateMap()) {
             floodfill(); 
         }
-        mousemove(); 
+        mousemove();
+        BT.println("X: " +  String(cur_x) + " | Y: " +  String(cur_y));
     }
 
     BT.println("Goal reached!");

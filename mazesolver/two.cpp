@@ -25,14 +25,16 @@ static float         _approach_lastError = NAN;
 static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 466;
-int LEFT_MAX = 872;
-int RIGHT_SETPOINT = 464;
-int RIGHT_MAX = 900;
-int LEFT_WALL_THRESHOLD = 345; 
+int LEFT_SETPOINT = 437;
+int LEFT_MAX = 890;
+int RIGHT_SETPOINT = 482;
+int RIGHT_MAX = 891;
+int LEFT_WALL_THRESHOLD = 380; 
 int RIGHT_WALL_THRESHOLD = 320;
-int FRONT_WALL_THRESHOLD = 324;
-int FRONT2_WALL_THRESHOLD = 330;
+int FRONT_WALL_DETECTION_THRESHOLD = 189;
+int FRONT2_WALL_DETECTION_THRESHOLD = 269;
+int FRONT_WALL_COLLISION_THRESHOLD = 230;
+int FRONT2_WALL_COLLISION_THRESHOLD = 303;
 
 int FRONT_MAX = 416; 
 int FRONT2_MAX = 576; 
@@ -40,6 +42,8 @@ int FRONT2_MAX = 576;
 static float _deriv_filtered = 0.0f;
 const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT/WHEEL_CIRCUMFERENCE;
 const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
+
+int BASE_SPEED = 100; 
 
 
 // Motor Control Functions
@@ -110,7 +114,12 @@ bool isWallRight(){
 bool isWallFront(){
   int front = getCorrectedReading(0);
   int front2 = getCorrectedReading(5);
-  return ((front > FRONT_WALL_THRESHOLD)&&(front2 > FRONT_WALL_THRESHOLD));
+  return ((front > FRONT_WALL_DETECTION_THRESHOLD)&&(front2 > FRONT_WALL_DETECTION_THRESHOLD));
+}
+bool isWallFrontCollision(){
+  int front = getCorrectedReading(0);
+  int front2 = getCorrectedReading(5);
+  return ((front > FRONT_WALL_COLLISION_THRESHOLD)&&(front2 > FRONT_WALL_COLLISION_THRESHOLD));
 }
 void turn(float angleDeg){
   const int   upper         = 110;
@@ -121,11 +130,11 @@ void turn(float angleDeg){
 
   float startTime = millis();
 
-  BT.println("turning");
-  BT.print("Kp|"); BT.println(Kp_turn);
-  BT.print("Kd|"); BT.println(Kd_turn);
-  BT.print("Upper|"); BT.println(upper);
-  BT.print("Lower|"); BT.println(lower); 
+  // BT.println("turning");
+  // BT.print("Kp|"); BT.println(Kp_turn);
+  // BT.print("Kd|"); BT.println(Kd_turn);
+  // BT.print("Upper|"); BT.println(upper);
+  // BT.print("Lower|"); BT.println(lower); 
 
   float integral = 0.0f;
   float previousError = 0.0f;
@@ -138,7 +147,7 @@ void turn(float angleDeg){
   delay(15);
 
   // A positive angleDeg turns right, negative turns left
-  targetYaw = startYaw + angleDeg;
+  targetYaw = (0.3*startYaw+0.7*targetYaw) + angleDeg;
 
   // STRICT NORMALIZATION: Wrap target directly to the IMU's native -180 to +180 range
   while (targetYaw > 180.0f) targetYaw -= 360.0f;
@@ -211,7 +220,6 @@ void applyPIDCentering(int rawLeft, int rawRight) {
   static bool wasUsingIMU = false; 
   static unsigned long lastTime = millis();
 
-  const int BASE_SPEED = 150; 
   const float IMU_SCALE = 5.0f; 
   
   unsigned long now = millis();
@@ -285,12 +293,12 @@ void applyPIDCentering(int rawLeft, int rawRight) {
   int leftSpeed = BASE_SPEED + turnAdjustment;
   int rightSpeed = BASE_SPEED - turnAdjustment;
   
-  if(isWallFront()) 
+  if(isWallFrontCollision()) 
   { BT.println("Front wall detected in PID loop"); 
     motorStop();return;} // check for walls before giving PWM
 
-  leftSpeed = constrain(leftSpeed, 110, 190);
-  rightSpeed = constrain(rightSpeed, 110, 190);
+  leftSpeed = constrain(leftSpeed, BASE_SPEED-40, BASE_SPEED+40);
+  rightSpeed = constrain(rightSpeed, BASE_SPEED-40, BASE_SPEED+40);
 
   // Motors are driven purely by the baseline speed and PID output
   motor1Forward(leftSpeed);
@@ -302,13 +310,13 @@ void centerUntilDistance(float dist){
   long TARGET_TICKS = dist * ((TICKS_PER_CM_LEFT + TICKS_PER_CM_RIGHT)/2.0) + currentTicks;
   while(true){
     currentTicks = (leftEncoderTicks + rightEncoderTicks)/2;
-    if(currentTicks < TARGET_TICKS && !isWallFront()){
+    if(currentTicks < TARGET_TICKS&& !isWallFrontCollision()){
       int currentLeft = getCorrectedReading(3);
       int currentRight = getCorrectedReading(1); 
       applyPIDCentering(currentLeft,currentRight); 
     }
     else{
-      // motorStop(); <-- add an if statement for this later
+      motorStop(); 
       BT.print("KP value: ");BT.println(Kp);
       BT.print("KD value: ");BT.println(Kd); 
       break; 
@@ -319,7 +327,7 @@ void centerUntilDistance(float dist){
 
 void centerUntilWall(){
   while(true){
-    if(isWallRight()&&!isWallFront()){
+    if(isWallRight()&&!isWallFrontCollision()){
       int currentLeft = getCorrectedReading(3);
       int currentRight = getCorrectedReading(1); 
       applyPIDCentering(currentLeft,currentRight);
