@@ -7,6 +7,10 @@ float Kp = 0.5;
 float Kd = 0.15; 
 float Ki = 0.0;
 
+float Kp_100 = 0.5;
+float Kd_100 = 0.15; 
+float Ki_100 = 0.0;
+
 float Kp_turn = 1.2;
 float Ki_turn = 0.0;
 float Kd_turn = 0.015;

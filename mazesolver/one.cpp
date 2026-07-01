@@ -10,7 +10,6 @@ const int MOTOR_SPEED_30 = 100;
 
 const int NUM_SENSORS = 6;
 
-// UPDATED: Mapped to match schematic while keeping original sensorNames order
 const int emitterPins[NUM_SENSORS] = {23, 41, 24, 21, 15, 39};
 const int sensorPins[NUM_SENSORS]  = {22, 40, 25, 20, 14, 38};
 
@@ -25,9 +24,9 @@ const char* sensorNames[NUM_SENSORS] = {
 
 const int ALGOPIN = 29;
 volatile int buttonPressCount = 0;
-HardwareSerial &BT = Serial2; // RX=7, TX=8 on Teensy 4.1
+HardwareSerial &BT = Serial2; 
 
-// UPDATED: Motor pins updated to match 3-pin setup from schematic
+
 const uint8_t M1_IN1 = 2;  // M1_INPUT1
 const uint8_t M1_IN2 = 4;  // M1_INPUT2
 const uint8_t M1_PWM = 9;  // PWMA
@@ -36,7 +35,8 @@ const uint8_t M2_IN1 = 3;  // M2_INPUT1
 const uint8_t M2_IN2 = 5;  // M2_INPUT2
 const uint8_t M2_PWM = 28; // PWMB
 
-// UPDATED: Pin 4 is now M1_IN2. Swapped to STATE_HC_05 on Pin 6 to avoid conflict.
+const uint8_t ALGPIN =29;
+
 const uint8_t STATE_HC_05 = 6; 
 
 const double MOTOR_BIAS = (127.0+15.0)/127.0;
@@ -191,6 +191,8 @@ void inithardware(){
   pinMode(M2_IN1, OUTPUT);
   pinMode(M2_IN2, OUTPUT);
   pinMode(M2_PWM, OUTPUT);
+
+  pinMode(ALGOPIN, INPUT_PULLUP); 
 
   attachInterrupt(digitalPinToInterrupt(ALGOPIN), algoInterrupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(EC_1A), isrLeftEncoder, CHANGE);
