@@ -67,5 +67,6 @@ void mousemove();
 void closeAll(Cell maze[MAZE_SIZE][MAZE_SIZE]); 
 std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]);
 void moveNormal(std::vector<int> path);
+void moveFast(std::vector<int> path);
 int executeFloodFill();
 
