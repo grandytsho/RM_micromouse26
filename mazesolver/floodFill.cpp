@@ -375,8 +375,7 @@ int executeFloodFill() {
     floodfill(); 
 
 
-    while(maze[cur_x][cur_y].distance != 0 && !stateChanged) {
-        if (stateChanged)return;
+    while(maze[cur_x][cur_y].distance != 0 ) {
         if(updateMap()) {
             floodfill(); 
         }
