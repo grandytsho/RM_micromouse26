@@ -351,7 +351,7 @@ void moveNormal(std::vector<int> path) {
 }
 
 void moveFast(std::vector<int> path){
-    int i = 0; 
+    uint8_t i = 0; 
     while(i < path.size()){
     int current_path_heading = path[i]; 
     int number_of_same_headings = 1; 
@@ -412,6 +412,7 @@ int executeFloodFill() {
     }
     delay(500);
     BT.println("Starting final optimized speedrun run...");
+    BASE_SPEED = BASE_SPEED+70;
     moveFast(path); 
     BT.println("Final speedrun moves taken: " + String(times_moved));
     calculateCost(path); 

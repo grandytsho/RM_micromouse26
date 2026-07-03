@@ -3,9 +3,9 @@
 #include <Arduino.h>
 #include <cmath>
 
-float Kp = 0.5;
-float Kd = 0.15; 
-float Ki = 0.0;
+float Kp = 0.7;
+float Kd = 0.18; 
+float Ki = 0.01;
 
 float Kp_100 = 0.5;
 float Kd_100 = 0.15; 
@@ -30,15 +30,15 @@ static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
 int LEFT_SETPOINT = 445;
-int LEFT_MAX = 940;
+int LEFT_MAX = 930;
 int RIGHT_SETPOINT = 444;
-int RIGHT_MAX = 940;
+int RIGHT_MAX = 865;
 int LEFT_WALL_THRESHOLD = 296; 
 int RIGHT_WALL_THRESHOLD = 265;
 int FRONT_WALL_DETECTION_THRESHOLD = 291;
 int FRONT2_WALL_DETECTION_THRESHOLD = 266;
-int FRONT_WALL_COLLISION_THRESHOLD = 357;
-int FRONT2_WALL_COLLISION_THRESHOLD = 390;
+int FRONT_WALL_COLLISION_THRESHOLD = 330;
+int FRONT2_WALL_COLLISION_THRESHOLD = 350;
 
 int FRONT_MAX = 416; 
 int FRONT2_MAX = 576; 
@@ -152,7 +152,7 @@ void turn(float angleDeg){
   delay(15);
 
   // A positive angleDeg turns right, negative turns left
-  targetYaw = (0.3*startYaw+0.7*targetYaw) + angleDeg;
+  targetYaw = startYaw + angleDeg;
 
   // STRICT NORMALIZATION: Wrap target directly to the IMU's native -180 to +180 range
   while (targetYaw > 180.0f) targetYaw -= 360.0f;

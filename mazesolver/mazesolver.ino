@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-int a=12, e =13;
+int a=10, e =12;
 bool  has_started = false; 
 void rightWallFollow();
 void leftWallFollow();
@@ -51,6 +51,14 @@ void loop() {
       Kd = BT.parseFloat(); 
       BT.print("\nKD value: "); 
       BT.println(Kd);
+    }
+
+    if (incomingChar == 'i') {
+      BT.print("\nEnter KI value: "); 
+      while (BT.available() == 0) { delay(1); }
+      Ki = BT.parseFloat(); 
+      BT.print("\nKI value: "); 
+      BT.println(Ki);
     }
 
 

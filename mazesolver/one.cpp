@@ -176,8 +176,9 @@ void algoInterrupt() {
 
 void inithardware(){
   Wire1.begin();
+  Wire1.setClock(400000); // Boost I2C speed to 400kHz for faster sensor reads
+  
   Serial.begin(115200); 
-
   BT.begin(9600);
   
   while (!Serial && millis() < 2000); 
@@ -187,7 +188,6 @@ void inithardware(){
     pinMode(sensorPins[i], INPUT); 
   }
   
-  // UPDATED: Mapped to STATE_HC_05 
   pinMode(STATE_HC_05, OUTPUT);
   digitalWrite(STATE_HC_05, LOW);
 
@@ -195,9 +195,7 @@ void inithardware(){
   pinMode(EC_1B, INPUT_PULLUP);
   pinMode(EC_2A, INPUT_PULLUP);
   pinMode(EC_2B, INPUT_PULLUP);
-  pinMode(ALGOPIN, INPUT_PULLUP);
-
-  // UPDATED: Included all new motor logic pins
+  
   pinMode(M1_IN1, OUTPUT);
   pinMode(M1_IN2, OUTPUT);
   pinMode(M1_PWM, OUTPUT);
@@ -206,7 +204,6 @@ void inithardware(){
   pinMode(M2_IN2, OUTPUT);
   pinMode(M2_PWM, OUTPUT);
 
-
   pinMode(ALGOPIN, INPUT_PULLUP); 
 
   attachInterrupt(digitalPinToInterrupt(RUNMODEPIN), runModeInterrupt, FALLING);
@@ -214,15 +211,16 @@ void inithardware(){
   attachInterrupt(digitalPinToInterrupt(EC_1A), isrLeftEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(EC_2A), isrRightEncoder, CHANGE);
 
-  if (!bno08x.begin_I2C(0x4B, &Wire1, -1)) {
-    Serial2.println("Address 0x4B failed, trying 0x4A...");
-    if (!bno08x.begin_I2C(0x4A, &Wire1, -1)) {
-       Serial2.println("ERROR: BNO085 not detected at all!");
-       return;
-    }
+  // Initialize IMU at the strict 0x4B address
+  if(!bno08x.begin_I2C(0x4B, &Wire1)) { 
+      BT.println("FATAL: Couldnt intialise BNO085");
+      while(1); 
   }
+  BT.println("IMU working");
   
-  Serial2.println("IMU connected. Enabling reports...");
-  bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 10000);
-  delay(800);
+  // Enable the missing data stream! (2500us = 400Hz refresh rate)
+  bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 2500); 
+  
+  // Give the sensor a moment to settle before the main loop starts
+  delay(800); 
 }
