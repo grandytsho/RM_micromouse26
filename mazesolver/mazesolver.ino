@@ -172,7 +172,7 @@ void rightWallFollow() {
     // delay(1000);
     centerUntilDistance(e);
     motorStop();
-    delay(5);
+    delay(1);
     turn(-90.0f);
     centerUntilDistance(a);
     delay(5);
@@ -189,7 +189,7 @@ void rightWallFollow() {
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
     //centerUntilDistance(2);
-    delay(5);
+    delay(1);
     turn(90.0f);
     centerUntilDistance(a);
     delay(5);
@@ -197,10 +197,10 @@ void rightWallFollow() {
   //U-Turn
   else {
     BT.println("dead end, U-turn");
-    motorStop();
-    delay(5);
+    // motorStop();
+    delay(1);
     turn(180.0f);
-    delay(5);
+    delay(1);
   }
   
   delay(5);
@@ -217,7 +217,7 @@ void leftWallFollow() {
     // delay(1000);
     centerUntilDistance(e);
     motorStop();
-    delay(5);
+    delay(1);
     turn(90.0f);
     centerUntilDistance(a);
     delay(5);

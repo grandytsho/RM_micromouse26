@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <cmath>
 
-float Kp = 0.5;
+float Kp = 0.7;
 float Kd = 0.15; 
 float Ki = 0.0;
 
