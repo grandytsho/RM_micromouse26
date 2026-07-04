@@ -412,8 +412,8 @@ int executeFloodFill() {
     }
     delay(500);
     BT.println("Starting final optimized speedrun run...");
-    BASE_SPEED = BASE_SPEED+70;
-    moveFast(path); 
+    BASE_SPEED = BASE_SPEED+50;
+    moveFast(path);
     BT.println("Final speedrun moves taken: " + String(times_moved));
     calculateCost(path); 
 
