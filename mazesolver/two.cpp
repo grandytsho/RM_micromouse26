@@ -29,12 +29,12 @@ static float         _approach_lastError = NAN;
 static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 440;
-int LEFT_MAX = 865;
-int RIGHT_SETPOINT = 445;
-int RIGHT_MAX = 902;
-int LEFT_WALL_THRESHOLD = 333; 
-int RIGHT_WALL_THRESHOLD = 295;
+int LEFT_SETPOINT = 460;
+int LEFT_MAX = 880;
+int RIGHT_SETPOINT = 460;
+int RIGHT_MAX = 930;
+int LEFT_WALL_THRESHOLD = 309; 
+int RIGHT_WALL_THRESHOLD = 285;
 int FRONT_WALL_DETECTION_THRESHOLD = 200;
 int FRONT2_WALL_DETECTION_THRESHOLD = 315;
 int FRONT_WALL_COLLISION_THRESHOLD = 226;
