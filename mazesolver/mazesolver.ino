@@ -5,10 +5,10 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-
+int a=10, e =12;
+bool  has_started = false; 
 void rightWallFollow();
 void leftWallFollow();
-bool isStarted = false; 
 
 void setup() {
   inithardware();
@@ -31,10 +31,6 @@ void loop() {
       while(BT.available() == 0){delay(1);}
       float dist = BT.parseFloat(); 
       centerUntilDistance(dist);
-    }
-
-    if (incomingChar == 'a') {
-      alignToFrontWall();
     }
     
     if (incomingChar == 'Y') {
@@ -61,9 +57,10 @@ void loop() {
       BT.print("\nEnter KI value: "); 
       while (BT.available() == 0) { delay(1); }
       Ki = BT.parseFloat(); 
-      BT.print("\nKi value: ");
+      BT.print("\nKI value: "); 
       BT.println(Ki);
     }
+
 
     if(incomingChar == 'c'){
       BT.print("\nEnter distance value: "); 
@@ -81,15 +78,18 @@ void loop() {
     }
     if(incomingChar == 'r'){
       while(true){
+        wallFollower = true; 
         rightWallFollow();
       }
     }
     if(incomingChar == 'l'){
       while(true){
+        wallFollower = true;
         leftWallFollow();
       }
     }
     if(incomingChar == 'x'){
+      wallFollower = false; 
       BT.println("Starting floodfill"); 
       executeFloodFill(); 
     }
@@ -101,8 +101,68 @@ void loop() {
       BT.print("\nBase Speed: ");
       BT.println(BASE_SPEED);
     }
+    if(incomingChar == 'e'){
+      BT.print("\n e value(13)"); 
+      while (BT.available() == 0) { delay(1); }
+      e = BT.parseInt();
+      BT.print("\ne val: ");
+      BT.println(e);
+    }
+    if(incomingChar == 'a'){
+      BT.print("\n a value(25)"); 
+      while (BT.available() == 0) { delay(1); }
+      a = BT.parseInt();
+      BT.print("\a val: ");
+      BT.println(a);
+    }
+
+    //Goal setting
+
+    if(incomingChar == 'q'){
+      BT.print("\n Enter X coordinate: "); 
+      while(BT.available() == 0){ delay(1); }
+      goal_x = BT.parseInt(); 
+      BT.print("Goal X: "); BT.println(goal_x); 
+    }
+
+    if(incomingChar == 'w'){
+      BT.print("\n Enter Y coordinate: "); 
+      while(BT.available() == 0){ delay(1); }
+      goal_y = BT.parseInt(); 
+      BT.print("Goal Y: "); BT.println(goal_y); 
+    }
   } // <-- This brace closes the if(BT.available() > 0) statement
 }
+
+
+// static int lastRunmodePresses = runmodeButtonPressCount; 
+
+// void loop() {
+  
+//   if (lastRunmodePresses != runmodeButtonPressCount) {
+//     lastRunmodePresses = runmodeButtonPressCount; 
+//     has_started = true; 
+//     BT.println("Starting Algorithm!");
+//   }
+
+  
+//   if (has_started) {
+//     if (algoButtonPressCount == 0) {
+//       wallFollower = false;
+//       executeFloodFill(); 
+      
+//       has_started = false; 
+//     }
+//     else if (algoButtonPressCount == 1) {
+//       wallFollower = true;
+//       leftWallFollow(); 
+//     }
+//     else if (algoButtonPressCount == 2) {
+//       wallFollower = true;
+//       rightWallFollow();
+//     }
+//   }
+// }
 
 void rightWallFollow() { 
   //Turn right
@@ -110,11 +170,11 @@ void rightWallFollow() {
     BT.println("NO RIGHT WALL");
     // motorStop();
     // delay(1000);
-    centerUntilDistance(13);
+    centerUntilDistance(e);
     motorStop();
     delay(5);
     turn(-90.0f);
-    centerUntilDistance(25);
+    centerUntilDistance(a);
     delay(5);
   }
   //Drive forward using PID
@@ -128,10 +188,10 @@ void rightWallFollow() {
     BT.println("turning Left");
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
-    centerUntilDistance(2);
+    //centerUntilDistance(2);
     delay(5);
     turn(90.0f);
-    centerUntilDistance(12);
+    centerUntilDistance(a);
     delay(5);
   }
   //U-Turn
@@ -155,11 +215,11 @@ void leftWallFollow() {
     BT.println("NO Left WALL|Left reading: "); BT.println(getCorrectedReading(3));
     // motorStop();
     // delay(1000);
-    centerUntilDistance(13);
+    centerUntilDistance(e);
     motorStop();
     delay(5);
     turn(90.0f);
-    centerUntilDistance(25);
+    centerUntilDistance(a);
     delay(5);
   }
   //Drive forward using PID
@@ -167,7 +227,7 @@ void leftWallFollow() {
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
     int currentLeft = getCorrectedReading(3);
-    int currentRight = getCorrectedReading(1); 
+    int currentRight = getCorrectedReading(1);
     applyPIDCentering(currentLeft, currentRight);
   }
   // Turn right
@@ -175,10 +235,10 @@ void leftWallFollow() {
     BT.println("turning Right");
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
-    centerUntilDistance(2); 
+    //centerUntilDistance(2); 
     delay(5);
     turn(-90.0f);
-    centerUntilDistance(25);
+    centerUntilDistance(a);
     delay(5);
   }
   //U-Turn
@@ -191,7 +251,6 @@ void leftWallFollow() {
     turn(180.0f);
     delay(5);
   }
-  
   delay(5);
   // BT.print("Right:");BT.println(isWallRight());
   // BT.print("Left:");BT.println(isWallLeft());

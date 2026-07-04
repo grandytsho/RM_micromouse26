@@ -16,7 +16,7 @@ float getLeftDiagonal();
 float getRightDiagonal();
 float getCorrectedReading(int sensorNum);
 float getCorrectedReadingAvg(int sensorNum);
-
+void resetIMU();
 
 //pins
 extern const int sensorPins[];
@@ -36,7 +36,14 @@ extern const uint8_t M2_PWM;  // M2 PWM
 //encoder ticks
 extern volatile long leftEncoderTicks ;
 extern volatile long rightEncoderTicks;
-extern volatile int buttonPressCount;
+
+extern const uint8_t ALGOPIN;
+extern volatile bool stateChanged;
+
+//buttons
+extern volatile int runmodeButtonPressCount;
+extern volatile int algoButtonPressCount;
+extern volatile int currentModeButtonCount;
 
 //constants
 extern const float WHEEL_DIAMETER;

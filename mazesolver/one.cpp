@@ -22,8 +22,10 @@ const char* sensorNames[NUM_SENSORS] = {
   "Front 2   "  // Sens: 38, Emit: 39
 };
 
-const int ALGOPIN = 29;
-volatile int buttonPressCount = 0;
+volatile int algoButtonPressCount = -1;
+volatile int runmodeButtonPressCount = 0;
+volatile int currentModeButtonCount = 0;
+
 HardwareSerial &BT = Serial2; 
 
 
@@ -35,7 +37,9 @@ const uint8_t M2_IN1 = 3;  // M2_INPUT1
 const uint8_t M2_IN2 = 5;  // M2_INPUT2
 const uint8_t M2_PWM = 28; // PWMB
 
-const uint8_t ALGPIN =29;
+const uint8_t ALGOPIN = 29;
+const uint8_t RUNMODEPIN = 12;
+volatile bool stateChanged = false;
 
 const uint8_t STATE_HC_05 = 6; 
 
@@ -43,7 +47,7 @@ const double MOTOR_BIAS = (127.0+15.0)/127.0;
 const double MOTOR_BIAS_TURN = 0.9383; 
 volatile long leftEncoderTicks = 0;
 volatile long rightEncoderTicks = 0;
-
+const uint8_t IMU_RESET_PIN = 11;
 Adafruit_BNO08x bno08x;
 sh2_SensorValue_t sensorValue; 
 
@@ -156,14 +160,25 @@ float getCorrectedReadingAvg(int sensorNum){
   return (raw_sum - ambient_sum) / NUM_SAMPLES;
 }
 
+
+void runModeInterrupt(){
+  runmodeButtonPressCount++;
+  BT.println(runmodeButtonPressCount);
+}
+
 void algoInterrupt() {
-  buttonPressCount++; // Keep code short and fast!
+  algoButtonPressCount++;
+  algoButtonPressCount = algoButtonPressCount%3;
+  currentModeButtonCount = currentModeButtonCount;
+  stateChanged=true;
+  BT.println(algoButtonPressCount);
 }
 
 void inithardware(){
   Wire1.begin();
+  Wire1.setClock(400000); // Boost I2C speed to 400kHz for faster sensor reads
+  
   Serial.begin(115200); 
-
   BT.begin(9600);
   
   while (!Serial && millis() < 2000); 
@@ -173,7 +188,6 @@ void inithardware(){
     pinMode(sensorPins[i], INPUT); 
   }
   
-  // UPDATED: Mapped to STATE_HC_05 
   pinMode(STATE_HC_05, OUTPUT);
   digitalWrite(STATE_HC_05, LOW);
 
@@ -181,9 +195,7 @@ void inithardware(){
   pinMode(EC_1B, INPUT_PULLUP);
   pinMode(EC_2A, INPUT_PULLUP);
   pinMode(EC_2B, INPUT_PULLUP);
-  pinMode(ALGOPIN, INPUT_PULLUP);
-
-  // UPDATED: Included all new motor logic pins
+  
   pinMode(M1_IN1, OUTPUT);
   pinMode(M1_IN2, OUTPUT);
   pinMode(M1_PWM, OUTPUT);
@@ -194,18 +206,21 @@ void inithardware(){
 
   pinMode(ALGOPIN, INPUT_PULLUP); 
 
+  attachInterrupt(digitalPinToInterrupt(RUNMODEPIN), runModeInterrupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(ALGOPIN), algoInterrupt, FALLING);
   attachInterrupt(digitalPinToInterrupt(EC_1A), isrLeftEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(EC_2A), isrRightEncoder, CHANGE);
 
+  // Initialize IMU at the strict 0x4B address
   if(!bno08x.begin_I2C(0x4B, &Wire1)) { 
-      Serial.println("Couldnt intialise BNO085");
+      BT.println("FATAL: Couldnt intialise BNO085");
       while(1); 
   }
-  Serial.println("IMU working");
-  bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 10000);
-
-  delay(1000); 
-  Serial.println("testing"); 
-  BT.print("setupdone");
+  BT.println("IMU working");
+  
+  // Enable the missing data stream! (2500us = 400Hz refresh rate)
+  bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 2500); 
+  
+  // Give the sensor a moment to settle before the main loop starts
+  delay(800); 
 }

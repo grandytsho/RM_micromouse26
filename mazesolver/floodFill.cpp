@@ -1,3 +1,4 @@
+#include <vector>
 #include "floodFill.h"
 
 float distance = 25; 
@@ -7,8 +8,8 @@ int cur_y = 0;
 int start_x = 0; 
 int start_y = 0; 
 
-int goal_x = 3; 
-int goal_y = 2; 
+int goal_x = 1; 
+int goal_y = 0; 
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
@@ -45,13 +46,8 @@ void floodfill() {
             maze[i][j].distance = MAZE_SIZE * MAZE_SIZE; 
         }
     }
-    if(returning_to_start) {
-        maze[start_x][start_y].distance = 0;
-        q.push({start_x, start_y}); 
-    } else {
         maze[goal_x][goal_y].distance = 0; 
         q.push({goal_x, goal_y}); 
-    }
 
     while (!q.empty()) {
         int cx = q.front().x;
@@ -354,12 +350,32 @@ void moveNormal(std::vector<int> path) {
     }
 }
 
+void moveFast(std::vector<int> path){
+    uint8_t i = 0; 
+    while(i < path.size()){
+    int current_path_heading = path[i]; 
+    int number_of_same_headings = 1; 
+
+    while(i+1 < path.size() && path[i+1] == current_path_heading){
+        number_of_same_headings++; 
+        i++;
+    }
+    if(current_path_heading != current_heading){
+    turnTo(current_path_heading);}
+    float total_distance = distance*number_of_same_headings; 
+    centerUntilDistance(total_distance); 
+
+    i++; 
+
+    }
+}
+
 int executeFloodFill() {  
     BT.println("Initializing flood fill to goal"); 
     floodfill(); 
 
 
-    while(maze[cur_x][cur_y].distance != 0) {
+    while(maze[cur_x][cur_y].distance != 0 ) {
         if(updateMap()) {
             floodfill(); 
         }
@@ -375,30 +391,29 @@ int executeFloodFill() {
         maze[cur_x][cur_y].visited = true;
         cells_visited++; 
     }
-    
+    motorStop(); 
     copyMap(); 
     closeAll(copy_maze);
+    std::vector<int> path = getAStarPath(copy_maze);
+
+    int currentButtonPress = runmodeButtonPressCount;
 
 
-    returning_to_start = true;
-    floodfill(); 
+    turnTo(North);
 
-    while(maze[cur_x][cur_y].distance != 0) {
-        if(updateMap()) {
-            floodfill(); 
-        }
-        mousemove(); 
+
+    BT.println("Press Run mode again to start the bot"); 
+
+    delay(2000); 
+
+    currentButtonPress = runmodeButtonPressCount; 
+    while(currentButtonPress == runmodeButtonPressCount){
+        delay(5);
     }
-
-
-    returning_to_start = false; 
-    times_moved = 0; 
-    speedrun = true; 
-
-    std::vector<int> path = getAStarPath(copy_maze); 
-    
+    delay(500);
     BT.println("Starting final optimized speedrun run...");
-    moveNormal(path);
+    BASE_SPEED = BASE_SPEED+70;
+    moveFast(path); 
     BT.println("Final speedrun moves taken: " + String(times_moved));
     calculateCost(path); 
 

@@ -18,7 +18,7 @@ float Kd_turn = 0.015;
 float Kp_align =0.4;
 float Kd_align = 0.01; 
 
-float targetYaw = 0;
+volatile float targetYaw = 0;
 int TURN_THRESHOLD = 10; 
 const float IMU_SCALE        = 1.0f; 
 const float BOTH_WALL_BLEND  = 0.85f;
@@ -29,16 +29,16 @@ static float         _approach_lastError = NAN;
 static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 437;
-int LEFT_MAX = 890;
-int RIGHT_SETPOINT = 482;
-int RIGHT_MAX = 891;
-int LEFT_WALL_THRESHOLD = 380; 
+int LEFT_SETPOINT = 450;
+int LEFT_MAX = 888;
+int RIGHT_SETPOINT = 464;
+int RIGHT_MAX = 900;
+int LEFT_WALL_THRESHOLD = 370; 
 int RIGHT_WALL_THRESHOLD = 320;
-int FRONT_WALL_DETECTION_THRESHOLD = 189;
-int FRONT2_WALL_DETECTION_THRESHOLD = 269;
-int FRONT_WALL_COLLISION_THRESHOLD = 230;
-int FRONT2_WALL_COLLISION_THRESHOLD = 303;
+int FRONT_WALL_DETECTION_THRESHOLD = 200;
+int FRONT2_WALL_DETECTION_THRESHOLD = 315;
+int FRONT_WALL_COLLISION_THRESHOLD = 282;
+int FRONT2_WALL_COLLISION_THRESHOLD = 376;
 
 int FRONT_MAX = 416; 
 int FRONT2_MAX = 576; 
@@ -47,8 +47,10 @@ static float _deriv_filtered = 0.0f;
 const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT/WHEEL_CIRCUMFERENCE;
 const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
 
-int BASE_SPEED = 100; 
+int BASE_SPEED = 120; 
 
+
+bool wallFollower = true;
 
 // Motor Control Functions
 void motor1Forward(int speed) {
@@ -151,7 +153,7 @@ void turn(float angleDeg){
   delay(15);
 
   // A positive angleDeg turns right, negative turns left
-  targetYaw = (0.3*startYaw+0.7*targetYaw) + angleDeg;
+  targetYaw = startYaw + angleDeg;
 
   // STRICT NORMALIZATION: Wrap target directly to the IMU's native -180 to +180 range
   while (targetYaw > 180.0f) targetYaw -= 360.0f;
@@ -320,7 +322,7 @@ void centerUntilDistance(float dist){
       applyPIDCentering(currentLeft,currentRight); 
     }
     else{
-      motorStop(); 
+      if(!wallFollower){motorStop();}
       BT.print("KP value: ");BT.println(Kp);
       BT.print("KD value: ");BT.println(Kd); 
       break; 
@@ -437,105 +439,105 @@ void centerUntilWall(){
 //   motor2Wraper(rightSpeed);
 // }
 
-void alignToFrontWall() {
-  _approach_lastTime  = 0;
-  _approach_lastError = NAN;
-  _approach_derivFilt = 0.0f;
+// void alignToFrontWall() {
+//   _approach_lastTime  = 0;
+//   _approach_lastError = NAN;
+//   _approach_derivFilt = 0.0f;
 
-  unsigned long alignedStartTime = 0;
-  unsigned long alignOverallTimeout = millis(); 
-  bool isFullyAligned = false;
+//   unsigned long alignedStartTime = 0;
+//   unsigned long alignOverallTimeout = millis(); 
+//   bool isFullyAligned = false;
 
-  // --- RAW TUNING CONSTANTS ---
-  const float TARGET_PROXIMITY_RAW = 208.0f; // Target center reading
-  const float TARGET_ERROR_RAW = 10.0f;      // Allowable raw difference
-  const int SETTLE_TIME_MS = 100;  
+//   // --- RAW TUNING CONSTANTS ---
+//   const float TARGET_PROXIMITY_RAW = 208.0f; // Target center reading
+//   const float TARGET_ERROR_RAW = 10.0f;      // Allowable raw difference
+//   const int SETTLE_TIME_MS = 100;  
 
-  // SENSOR BALANCE OFFSET
-  const int SENSOR_OFFSET = 77; 
+//   // SENSOR BALANCE OFFSET
+//   const int SENSOR_OFFSET = 77; 
 
-  while (!isFullyAligned) {
-    if (millis() - alignOverallTimeout > 2500) {
-      BT.println("Align timed out");
-      break;
-    }
+//   while (!isFullyAligned) {
+//     if (millis() - alignOverallTimeout > 2500) {
+//       BT.println("Align timed out");
+//       break;
+//     }
 
-    int rawFront = getCorrectedReading(0);
-    int rawFront2 = getCorrectedReading(5);
+//     int rawFront = getCorrectedReading(0);
+//     int rawFront2 = getCorrectedReading(5);
 
-    int balancedFront2 = rawFront2 - SENSOR_OFFSET;
+//     int balancedFront2 = rawFront2 - SENSOR_OFFSET;
 
-    int avgProximityRaw = (rawFront + balancedFront2) / 2;
-    float errorRaw = (float)(rawFront - balancedFront2);
+//     int avgProximityRaw = (rawFront + balancedFront2) / 2;
+//     float errorRaw = (float)(rawFront - balancedFront2);
 
-    if (avgProximityRaw >= TARGET_PROXIMITY_RAW && fabsf(errorRaw) <= TARGET_ERROR_RAW) {
-      if (alignedStartTime == 0) {
-        alignedStartTime = millis(); 
-      } 
-      else if (millis() - alignedStartTime > SETTLE_TIME_MS) {
-        isFullyAligned = true; 
-        break; 
-      }
-    } 
-    else {
-      alignedStartTime = 0; 
-    }
+//     if (avgProximityRaw >= TARGET_PROXIMITY_RAW && fabsf(errorRaw) <= TARGET_ERROR_RAW) {
+//       if (alignedStartTime == 0) {
+//         alignedStartTime = millis(); 
+//       } 
+//       else if (millis() - alignedStartTime > SETTLE_TIME_MS) {
+//         isFullyAligned = true; 
+//         break; 
+//       }
+//     } 
+//     else {
+//       alignedStartTime = 0; 
+//     }
 
-    approachAndSquareUp(rawFront, rawFront2);
-    delay(2); 
-  }
+//     approachAndSquareUp(rawFront, rawFront2);
+//     delay(2); 
+//   }
   
-  motorStop();
-  delay(150); 
+//   motorStop();
+//   delay(150); 
   
-  targetYaw = getYaw(2); 
-}
+//   targetYaw = getYaw(2); 
+// }
 
-void approachAndSquareUp(int rawFront, int rawFront2) {
-  const float ALPHA = 0.2f; 
-  const int SENSOR_OFFSET = 77; 
-  int balancedFront2 = rawFront2 - SENSOR_OFFSET;
+// void approachAndSquareUp(int rawFront, int rawFront2) {
+//   const float ALPHA = 0.2f; 
+//   const int SENSOR_OFFSET = 77; 
+//   int balancedFront2 = rawFront2 - SENSOR_OFFSET;
 
-  unsigned long now = millis();
-  float dt = (_approach_lastTime == 0) ? 0.01f 
-             : constrain((now - _approach_lastTime) / 1000.0f, 0.001f, 0.05f);
-  _approach_lastTime = now;
+//   unsigned long now = millis();
+//   float dt = (_approach_lastTime == 0) ? 0.01f 
+//              : constrain((now - _approach_lastTime) / 1000.0f, 0.001f, 0.05f);
+//   _approach_lastTime = now;
 
-  int avgProximityRaw = (rawFront + balancedFront2) / 2;
-  float errorRaw = (float)(rawFront - balancedFront2);
+//   int avgProximityRaw = (rawFront + balancedFront2) / 2;
+//   float errorRaw = (float)(rawFront - balancedFront2);
 
-  if (isnan(_approach_lastError)) _approach_lastError = errorRaw;
+//   if (isnan(_approach_lastError)) _approach_lastError = errorRaw;
   
-  float rawDeriv = (errorRaw - _approach_lastError) / dt;
-  _approach_derivFilt = ALPHA * rawDeriv + (1.0f - ALPHA) * _approach_derivFilt; 
-  _approach_lastError = errorRaw;
+//   float rawDeriv = (errorRaw - _approach_lastError) / dt;
+//   _approach_derivFilt = ALPHA * rawDeriv + (1.0f - ALPHA) * _approach_derivFilt; 
+//   _approach_lastError = errorRaw;
 
-  float turnAdjustment = constrain((Kp_align * errorRaw) + (Kd_align * _approach_derivFilt), -40.0f, 40.0f);
+//   float turnAdjustment = constrain((Kp_align * errorRaw) + (Kd_align * _approach_derivFilt), -40.0f, 40.0f);
 
-  int baseSpeed = 0;
-  const int START_BRAKE_RAW = 150;       
-  const int TARGET_PROXIMITY_RAW = 208;  
+//   int baseSpeed = 0;
+//   const int START_BRAKE_RAW = 150;       
+//   const int TARGET_PROXIMITY_RAW = 208;  
 
-  if (avgProximityRaw < TARGET_PROXIMITY_RAW) {
-    baseSpeed = constrain((int)map(avgProximityRaw, START_BRAKE_RAW, TARGET_PROXIMITY_RAW, 55, 5), 5, 55);
-  } 
-  else if (avgProximityRaw > TARGET_PROXIMITY_RAW + 15) {
-    baseSpeed = -15; 
-  }
+//   if (avgProximityRaw < TARGET_PROXIMITY_RAW) {
+//     baseSpeed = constrain((int)map(avgProximityRaw, START_BRAKE_RAW, TARGET_PROXIMITY_RAW, 55, 5), 5, 55);
+//   } 
+//   else if (avgProximityRaw > TARGET_PROXIMITY_RAW + 15) {
+//     baseSpeed = -15; 
+//   }
 
-  int leftSpeed  = constrain(baseSpeed - (int)turnAdjustment, -35, 80);
-  int rightSpeed = constrain(baseSpeed + (int)turnAdjustment, -35, 80);
+//   int leftSpeed  = constrain(baseSpeed - (int)turnAdjustment, -35, 80);
+//   int rightSpeed = constrain(baseSpeed + (int)turnAdjustment, -35, 80);
 
-  // Restored Print Statements
-  BT.print("rawFront:"); BT.println(rawFront);
-  BT.print("rawFront2:"); BT.println(rawFront2);
-  BT.print("balancedFront2:"); BT.println(balancedFront2);
-  BT.print("avgProximityRaw:"); BT.println(avgProximityRaw);
-  BT.print("errorRaw:"); BT.println(errorRaw);
-  BT.print("turnAdjustment:"); BT.println(turnAdjustment);
-  BT.print("leftSpeed:"); BT.println(leftSpeed);
-  BT.print("rightSpeed:"); BT.println(rightSpeed);
+//   // Restored Print Statements
+//   BT.print("rawFront:"); BT.println(rawFront);
+//   BT.print("rawFront2:"); BT.println(rawFront2);
+//   BT.print("balancedFront2:"); BT.println(balancedFront2);
+//   BT.print("avgProximityRaw:"); BT.println(avgProximityRaw);
+//   BT.print("errorRaw:"); BT.println(errorRaw);
+//   BT.print("turnAdjustment:"); BT.println(turnAdjustment);
+//   BT.print("leftSpeed:"); BT.println(leftSpeed);
+//   BT.print("rightSpeed:"); BT.println(rightSpeed);
 
-  motor1Wraper(leftSpeed);
-  motor2Wraper(rightSpeed);
-}
+//   motor1Wraper(leftSpeed);
+//   motor2Wraper(rightSpeed);
+// }
