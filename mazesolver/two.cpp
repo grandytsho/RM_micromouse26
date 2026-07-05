@@ -49,7 +49,7 @@ const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
 
 int BASE_SPEED = 130; 
 
-bool wallFollower = true;
+bool wallFollower = false;
 
 // Motor Control Functions
 void motor1Forward(int speed) {
@@ -201,10 +201,10 @@ void turn(float angleDeg){
 
     if (output > 0) {
       motor1Reverse(pwm);   
-      motor2Forward(pwm * MOTOR_BIAS_TURN);  
+      motor2Forward(pwm * 1);  
     } else {
       motor1Forward(pwm);  
-      motor2Reverse(pwm * MOTOR_BIAS_TURN);   
+      motor2Reverse(pwm * 1);   
     }
 
     delay(5);
