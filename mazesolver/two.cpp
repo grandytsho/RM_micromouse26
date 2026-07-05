@@ -341,6 +341,53 @@ void centerUntilWall(){
   }
 }
 
+void uTurnAndAlign(){
+  BT.println("Aligning after U-Turn"); 
+
+  turn(180); 
+  delay(50); 
+
+  int reverseSpeed = 60;
+  motor1Reverse(reverseSpeed); 
+  motor2Reverse(reverseSpeed); 
+  uint32_t startTime = millis(); 
+  uint8_t stallCount = 0; 
+
+  long lastLeft = leftEncoderTicks; 
+  long lastRight = rightEncoderTicks; 
+
+  while(millis() - startTime < 1500){ 
+    delay(10); 
+
+    long currentLeft = leftEncoderTicks; 
+    long currentRight = rightEncoderTicks; 
+
+    int delLeft = abs(currentLeft - lastLeft); 
+    int delRight = abs(currentRight - lastRight); 
+
+    if(delLeft <=1 && delRight <= 1){
+      stallCount++; 
+    }
+    else{
+      stallCount = 0; 
+    }
+
+    if(stallCount >= 5){
+      BT.println("Alignment complete"); break; 
+    }
+
+    lastLeft = currentLeft; 
+    lastRight = currentRight; 
+
+  }
+  
+  motorStop(); 
+  delay(150); 
+
+  targetYaw = getYaw(2); 
+
+}
+
 // void alignToFrontWall() {
 //   // Reset the PID memory at the start of every alignment session
 //   // This completely prevents the derivative spike bug.

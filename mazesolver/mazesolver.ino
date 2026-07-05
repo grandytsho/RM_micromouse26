@@ -199,7 +199,7 @@ void rightWallFollow() {
     BT.println("dead end, U-turn");
     motorStop();
     delay(1);
-    turn(180.0f);
+    uTurnAndAlign();
     delay(1);
   }
   
@@ -248,7 +248,7 @@ void leftWallFollow() {
     BT.print("Front2: ");BT.println(getCorrectedReading(0)); 
     motorStop();
     delay(1);
-    turn(180.0f);
+    uTurnAndAlign();
     delay(1);
   }
   delay(1);

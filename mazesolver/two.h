@@ -44,5 +44,6 @@ void centerUntilDistance(float dist);
 void centerUntilWall();
 void alignToFrontWall();
 void approachAndSquareUp(int rawFront, int rawFront2);
+void uTurnAndAlign(); 
 
 #endif
