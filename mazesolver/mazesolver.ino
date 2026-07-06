@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-int a=10, e =12;
+int a=9, e =11;
 bool  has_started = false; 
 void rightWallFollow();
 void leftWallFollow();
@@ -199,7 +199,8 @@ void rightWallFollow() {
     BT.println("dead end, U-turn");
     motorStop();
     delay(1);
-    uTurnAndAlign();
+    // uTurnAndAlign();
+    turn(180.0f); 
     delay(1);
   }
   
@@ -248,7 +249,8 @@ void leftWallFollow() {
     BT.print("Front2: ");BT.println(getCorrectedReading(0)); 
     motorStop();
     delay(1);
-    uTurnAndAlign();
+    // uTurnAndAlign();
+    turn(180.0f); 
     delay(1);
   }
   delay(1);

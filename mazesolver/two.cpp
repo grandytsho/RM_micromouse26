@@ -29,16 +29,16 @@ static float         _approach_lastError = NAN;
 static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 445;
-int LEFT_MAX = 930;
-int RIGHT_SETPOINT = 444;
-int RIGHT_MAX = 865;
-int LEFT_WALL_THRESHOLD = 296; 
-int RIGHT_WALL_THRESHOLD = 265;
-int FRONT_WALL_DETECTION_THRESHOLD = 291;
-int FRONT2_WALL_DETECTION_THRESHOLD = 266;
-int FRONT_WALL_COLLISION_THRESHOLD = 330;
-int FRONT2_WALL_COLLISION_THRESHOLD = 350;
+int LEFT_SETPOINT = 476;
+int LEFT_MAX = 956;
+int RIGHT_SETPOINT = 473;
+int RIGHT_MAX = 937;
+int LEFT_WALL_THRESHOLD = 307; 
+int RIGHT_WALL_THRESHOLD = 269;
+int FRONT_WALL_DETECTION_THRESHOLD = 268;
+int FRONT2_WALL_DETECTION_THRESHOLD = 268;
+int FRONT_WALL_COLLISION_THRESHOLD = 332;
+int FRONT2_WALL_COLLISION_THRESHOLD = 369;
 
 int FRONT_MAX = 416; 
 int FRONT2_MAX = 576; 
@@ -201,10 +201,10 @@ void turn(float angleDeg){
 
     if (output > 0) {
       motor1Reverse(pwm);   
-      motor2Forward(pwm * 1);  
+      motor2Forward(pwm * MOTOR_BIAS_TURN);  
     } else {
       motor1Forward(pwm);  
-      motor2Reverse(pwm * 1);   
+      motor2Reverse(pwm * MOTOR_BIAS_TURN);   
     }
 
     delay(5);
