@@ -44,7 +44,7 @@ volatile bool stateChanged = false;
 const uint8_t STATE_HC_05 = 6; 
 
 const double MOTOR_BIAS = (127.0+15.0)/127.0;
-const double MOTOR_BIAS_TURN = 0.9383; 
+const double MOTOR_BIAS_TURN = 0.97; 
 volatile long leftEncoderTicks = 0;
 volatile long rightEncoderTicks = 0;
 const uint8_t IMU_RESET_PIN = 11;
@@ -53,14 +53,14 @@ sh2_SensorValue_t sensorValue;
 
 float currentYaw = 0.0f;
 const float WHEEL_DIAMETER = 3.4f;
-const float TICKS_PER_REVOLUTION_LEFT = 743.0f;
-const float TICKS_PER_REVOLUTION_RIGHT = 737.0f; 
+const float TICKS_PER_REVOLUTION_LEFT = 745.0f;
+const float TICKS_PER_REVOLUTION_RIGHT = 745.0f; 
 const float WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER*M_PI;
 const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT/WHEEL_CIRCUMFERENCE;
 const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
 
 void isrLeftEncoder() {
-    if (digitalRead(EC_1A) == digitalRead(EC_1B)) {
+    if (digitalReadFast(EC_1A) == digitalReadFast(EC_1B)) {
         leftEncoderTicks--;
     } else {
         leftEncoderTicks++;
@@ -68,7 +68,7 @@ void isrLeftEncoder() {
 }
 
 void isrRightEncoder() {
-    if (digitalRead(EC_2A) != digitalRead(EC_2B)) {
+    if (digitalReadFast(EC_2A) != digitalReadFast(EC_2B)) {
         rightEncoderTicks--;
     } else {
         rightEncoderTicks++;

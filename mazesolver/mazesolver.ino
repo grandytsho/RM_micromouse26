@@ -38,19 +38,19 @@ void loop() {
     }
     
     if (incomingChar == 'p') {
-      BT.print("\nEnter KP  value: ");
+      BT.print("\nEnter KP turn value: ");
       while (BT.available() == 0) { delay(1); }
-      Kp= BT.parseFloat(); 
-      BT.print("\nKP  value: "); 
-      BT.println(Kp);
+      Kp_turn= BT.parseFloat(); 
+      BT.print("\nKP turn value: "); 
+      BT.println(Kp_turn);
     }
     
     if (incomingChar == 'd') {
-      BT.print("\nEnter KD value: "); 
+      BT.print("\nEnter KD turn value: "); 
       while (BT.available() == 0) { delay(1); }
-      Kd = BT.parseFloat(); 
-      BT.print("\nKD value: "); 
-      BT.println(Kd);
+      Kd_turn = BT.parseFloat(); 
+      BT.print("\nKD turn value: "); 
+      BT.println(Kd_turn);
     }
 
     if (incomingChar == 'i') {

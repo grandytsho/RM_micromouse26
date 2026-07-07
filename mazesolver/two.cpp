@@ -29,7 +29,7 @@ static float         _approach_lastError = NAN;
 static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 476;
+int LEFT_SETPOINT = 507;
 int LEFT_MAX = 956;
 int RIGHT_SETPOINT = 473;
 int RIGHT_MAX = 937;
@@ -200,11 +200,11 @@ void turn(float angleDeg){
     int pwm = constrain(abs(output), lower, upper);
 
     if (output > 0) {
-      motor1Reverse(pwm);   
-      motor2Forward(pwm * MOTOR_BIAS_TURN);  
+      motor1Reverse(pwm*MOTOR_BIAS_TURN);   
+      motor2Forward(pwm);  
     } else {
-      motor1Forward(pwm);  
-      motor2Reverse(pwm * MOTOR_BIAS_TURN);   
+      motor1Forward(pwm*MOTOR_BIAS_TURN);  
+      motor2Reverse(pwm);   
     }
 
     delay(5);
@@ -315,7 +315,7 @@ void centerUntilDistance(float dist){
   long TARGET_TICKS = dist * ((TICKS_PER_CM_LEFT + TICKS_PER_CM_RIGHT)/2.0) + currentTicks;
   while(true){
     currentTicks = (leftEncoderTicks + rightEncoderTicks)/2;
-    if(currentTicks < TARGET_TICKS&& !isWallFrontCollision()){
+    if(currentTicks < TARGET_TICKS && !isWallFrontCollision()){
       int currentLeft = getCorrectedReading(3);
       int currentRight = getCorrectedReading(1); 
       applyPIDCentering(currentLeft,currentRight); 
