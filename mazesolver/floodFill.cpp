@@ -1,7 +1,7 @@
 #include <vector>
 #include "floodFill.h"
 
-float distance = 25; 
+float distance = 24; 
 
 int cur_x = 0; 
 int cur_y = 0; 
@@ -362,7 +362,8 @@ void moveFast(std::vector<int> path){
     }
     if(current_path_heading != current_heading){
     turnTo(current_path_heading);}
-    float total_distance = distance*number_of_same_headings; 
+    float total_distance = distance*number_of_same_headings;
+    BT.print("Moving distance: "); BT.println(total_distance); 
     centerUntilDistance(total_distance); 
 
     i++; 
