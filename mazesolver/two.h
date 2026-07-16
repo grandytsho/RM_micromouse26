@@ -29,6 +29,8 @@ extern bool wallFollower;
 
 extern volatile float targetYaw;
 
+extern float turnThreshold;   
+
 void motorStop();
 void motor1Forward(int speed);
 void motor2Forward(int speed);

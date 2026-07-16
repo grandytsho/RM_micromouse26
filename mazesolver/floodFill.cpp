@@ -1,7 +1,7 @@
 #include <vector>
 #include "floodFill.h"
 
-float distance = 25; 
+float distance = 24; 
 
 int cur_x = 0; 
 int cur_y = 0;

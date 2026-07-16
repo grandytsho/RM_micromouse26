@@ -4,7 +4,7 @@
 #include <cmath>
 
 float Kp = 0.7;
-float Kd = 0.18; 
+float Kd = 0.15; 
 float Ki = 0.01;
 
 float Kp_100 = 0.5;
@@ -29,16 +29,16 @@ static float         _approach_lastError = NAN;
 static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 507;
-int LEFT_MAX = 956;
-int RIGHT_SETPOINT = 473;
-int RIGHT_MAX = 937;
-int LEFT_WALL_THRESHOLD = 307; 
-int RIGHT_WALL_THRESHOLD = 269;
-int FRONT_WALL_DETECTION_THRESHOLD = 268;
-int FRONT2_WALL_DETECTION_THRESHOLD = 268;
-int FRONT_WALL_COLLISION_THRESHOLD = 332;
-int FRONT2_WALL_COLLISION_THRESHOLD = 369;
+int LEFT_SETPOINT = 521;
+int LEFT_MAX = 937;
+int RIGHT_SETPOINT = 484;
+int RIGHT_MAX = 950;
+int LEFT_WALL_THRESHOLD = 363; 
+int RIGHT_WALL_THRESHOLD = 249;
+int FRONT_WALL_DETECTION_THRESHOLD = 311;
+int FRONT2_WALL_DETECTION_THRESHOLD = 368;
+int FRONT_WALL_COLLISION_THRESHOLD = 390;
+int FRONT2_WALL_COLLISION_THRESHOLD = 420;
 
 int FRONT_MAX = 416; 
 int FRONT2_MAX = 576; 
@@ -50,6 +50,9 @@ const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
 int BASE_SPEED = 130; 
 
 bool wallFollower = false;
+
+float turnThreshold = 0.25f;   // degrees — slightly relaxed for stability
+
 
 // Motor Control Functions
 void motor1Forward(int speed) {
@@ -129,7 +132,6 @@ bool isWallFrontCollision(){
 void turn(float angleDeg){
   const int   upper         = 110;
   const int   lower         = 30;
-  const float turnThreshold = 0.25f;   // degrees — slightly relaxed for stability
   const float DERIV_ALPHA   = 0.25f;   // EMA weight for new sample (lower = smoother)
   const float DT_FLOOR      = 0.004f;  // FIX 1: 4 ms floor matches delay(5) reality
 

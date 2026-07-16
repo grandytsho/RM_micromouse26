@@ -74,7 +74,11 @@ void loop() {
       turn(-90);
     }
     if (incomingChar == 'z') {
-      turn(90);
+      BT.print("\nEnter turn threshold value: ");
+      while(BT.available() == 0){delay(1);}
+      turnThreshold = BT.parseFloat();
+      BT.print("\turn threshold  value: ");
+      BT.println(turnThreshold);
     }
     if(incomingChar == 'r'){
       while(true){
@@ -149,17 +153,19 @@ void loop() {
 //   if (has_started) {
 //     if (algoButtonPressCount == 0) {
 //       wallFollower = false;
-//       executeFloodFill(); 
-      
-//       has_started = false; 
+//       executeFloodFill();  
+//       has_started = false;
+//       lastRunmodePresses = runmodeButtonPressCount; 
 //     }
 //     else if (algoButtonPressCount == 1) {
 //       wallFollower = true;
-//       leftWallFollow(); 
+//       while(true)
+//         leftWallFollow();
 //     }
 //     else if (algoButtonPressCount == 2) {
 //       wallFollower = true;
-//       rightWallFollow();
+//       while(true)
+//         rightWallFollow();
 //     }
 //   }
 // }
