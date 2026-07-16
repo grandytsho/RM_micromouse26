@@ -3,17 +3,17 @@
 
 float distance = 24; 
 
-int cur_x = 0; 
+int cur_x = 5; 
 int cur_y = 0; 
-int start_x = 0; 
+int start_x = 5; 
 int start_y = 0; 
 
-int goal_x = 1; 
+int goal_x = 0; 
 int goal_y = 0; 
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
-heading current_heading = North;
+heading current_heading = West;
 bool returning_to_start = false;
 int cells_visited = 0;
 int times_moved = 0;
@@ -400,7 +400,7 @@ int executeFloodFill() {
     int currentButtonPress = runmodeButtonPressCount;
 
 
-    turnTo(North);
+    turnTo(West);
 
 
     BT.println("Press Run mode again to start the bot"); 
