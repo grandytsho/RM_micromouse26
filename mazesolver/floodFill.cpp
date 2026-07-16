@@ -259,9 +259,11 @@ std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]) {
     }
 
     std::priority_queue<AStarNode, std::vector<AStarNode>, std::greater<AStarNode>> pq;
-    maze[0][0].g = 0;
-    maze[0][0].f = maze[0][0].h;
-    pq.push({0, 0, maze[0][0].f, maze[0][0].h, current_heading});
+    
+    // Updated to use start_x and start_y instead of 0, 0
+    maze[start_x][start_y].g = 0;
+    maze[start_x][start_y].f = maze[start_x][start_y].h;
+    pq.push({start_x, start_y, maze[start_x][start_y].f, maze[start_x][start_y].h, North}); 
 
     while(!pq.empty()) {
         AStarNode current = pq.top();
@@ -327,7 +329,9 @@ std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]) {
     std::vector<int> path;
     if(goal_x != -1) {
         int px = goal_x, py = goal_y;
-        while(px != 0 || py != 0) { 
+        
+        // Updated loop condition to stop when tracing back to start_x and start_y
+        while(px != start_x || py != start_y) { 
             int prx = maze[px][py].parent_x;
             int pry = maze[px][py].parent_y;
             if(py > pry) path.push_back(North);
