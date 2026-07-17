@@ -29,8 +29,8 @@ void loop() {
     if (incomingChar == 'f') {
       BT.print("\nEnter distance value: ");
       while(BT.available() == 0){delay(1);}
-      float dist = BT.parseFloat(); 
-      centerUntilDistance(dist);
+      distance = BT.parseFloat(); 
+      centerUntilDistance(distance);
     }
     
     if (incomingChar == 'Y') {
@@ -200,8 +200,8 @@ void rightWallFollow() {
     motorStop();
     delay(1);
     // uTurnAndAlign();
-    turn(180.0f); 
-    delay(1);
+    turn(180.0f);
+    delay(1); 
   }
   
   delay(1);
