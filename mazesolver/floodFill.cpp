@@ -3,13 +3,13 @@
 
 float distance = 24; 
 
-int cur_x = 5; 
+int cur_x = 0; 
 int cur_y = 0; 
-int start_x = 5; 
+int start_x = 0; 
 int start_y = 0; 
 
-int goal_x = 0; 
-int goal_y = 0; 
+int goal_x = 6; 
+int goal_y = 7;
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
@@ -366,7 +366,7 @@ void moveFast(std::vector<int> path){
     }
     if(current_path_heading != current_heading){
     turnTo(current_path_heading);}
-    float total_distance = distance*number_of_same_headings;
+    float total_distance = distance*number_of_same_headings - 2;
     BT.print("Moving distance: "); BT.println(total_distance); 
     centerUntilDistance(total_distance); 
 
