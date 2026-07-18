@@ -10,7 +10,7 @@
 
 extern float distance;
 
-const int MAZE_SIZE = 8;
+const int MAZE_SIZE = 6;
 const int straight_cost = 1; 
 const int turn_cost = 2; 
 

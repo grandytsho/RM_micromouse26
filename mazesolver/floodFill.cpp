@@ -1,19 +1,19 @@
 #include <vector>
 #include "floodFill.h"
 
-float distance = 24; 
+float distance = 23; 
 
-int cur_x = 0; 
+int cur_x = 5; 
 int cur_y = 0; 
-int start_x = 0; 
+int start_x = 5; 
 int start_y = 0; 
 
-int goal_x = 6; 
-int goal_y = 7;
+int goal_x = 4; 
+int goal_y = 3;
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
-heading current_heading = West;
+heading current_heading = North;
 bool returning_to_start = false;
 int cells_visited = 0;
 int times_moved = 0;
@@ -404,7 +404,7 @@ int executeFloodFill() {
     int currentButtonPress = runmodeButtonPressCount;
 
 
-    turnTo(West);
+    turnTo(North);
 
 
     BT.println("Press Run mode again to start the bot"); 
