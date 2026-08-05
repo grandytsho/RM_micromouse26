@@ -3,14 +3,14 @@
 <table>
   <tr>
     <td>
-      <img src="images/pcb_image_1.jpeg" alt="PCB1 Pic 1" width="400"/>
+      <img src="images/pcb_image_1.jpeg" alt="PCB Pic 1" width="400"/>
       <br>
-      <em>PCB Maze Solver Robot</em>
+      <em>PCB Maze Solver Robot Front</em>
     </td>
     <td>
       <img src="images/pcb_image_2.jpeg" alt="PCB Pic 2" width="400"/>
       <br>
-      <em>PCB Maze Solver Robot</em>
+      <em>PCB Maze Solver Robot Back</em>
     </td>
   </tr>
 </table>
