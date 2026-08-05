@@ -4,7 +4,7 @@ This project features an autonomous maze-solving robot designed for the **Techno
 
 > **Note:** This current branch is dedicated to the **1st Veroboard Prototype**. We utilized this build to test our core software logic. Ultimately, it was not used in the final competition due to physical dimensional constraints and hardware instabilities. However, the foundational software tested here led to the creation of two podium-winning robots utilizing fully in-house designed PCBs.
 
-![Veroboard Bot Prototype](Insert_Image_Link_Here)
+<img src="images/veroboard_prototype.jpeg" alt="Veroboard Bot Prototype" width="500">
 
 ---
 
