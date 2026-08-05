@@ -1,6 +1,19 @@
 ## 🤖 About the Bot
 
-![PCB1 Bot](Insert_PCB1_Image_Link_Here)
+<table>
+  <tr>
+    <td>
+      <img src="images/pcb_image_1.jpeg" alt="PCB Pic 1" width="400"/>
+      <br>
+      <em>PCB Maze Solver Robot Front</em>
+    </td>
+    <td>
+      <img src="images/pcb_image_2.jpeg" alt="PCB Pic 2" width="400"/>
+      <br>
+      <em>PCB Maze Solver Robot Back</em>
+    </td>
+  </tr>
+</table>
 
 This is the first of the two almost identical bots we made for the Technoxian 2026 competition. 
 It uses an array of **6 IR sensors** situated on the boundary of the maze solver. The orientation of the IR sensors is positioned such that we have maximum area coverage. 
