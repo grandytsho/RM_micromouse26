@@ -12,12 +12,13 @@ This project features an autonomous maze-solving robot designed for the **Techno
 
 The branches containing complete, detailed information about the main competition robots we used can be found below:
 
-*   **PCB1 Maze Solver Robot**  
-    ![PCB1 Maze Solver Robot](Insert_PCB1_Image_Link_Here)  
+
+<img src="images/pcb_bot.jpeg" alt="PCB Bot" width="500">
+
+*   **PCB1 Maze Solver Robot**   
     [🔗 Link to the PCB1 Repository](https://github.com/grandytsho/RM_micromouse26/tree/pcb)
 
-*   **PCB2 Maze Solver Robot**  
-    ![PCB2 Maze Solver Robot](Insert_PCB2_Image_Link_Here)  
+*   **PCB2 Maze Solver Robot**   
     [🔗 Link to the PCB2 Repository](https://github.com/grandytsho/RM_micromouse26/tree/pcb2)
 
 ---
