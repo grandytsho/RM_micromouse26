@@ -14,11 +14,11 @@ The branches containing complete, detailed information about the main competitio
 
 *   **PCB1 Maze Solver Robot**  
     ![PCB1 Maze Solver Robot](Insert_PCB1_Image_Link_Here)  
-    [🔗 Link to the PCB1 Repository](Insert_PCB1_Repo_Link_Here)
+    [🔗 Link to the PCB1 Repository](https://github.com/grandytsho/RM_micromouse26/tree/pcb)
 
 *   **PCB2 Maze Solver Robot**  
     ![PCB2 Maze Solver Robot](Insert_PCB2_Image_Link_Here)  
-    [🔗 Link to the PCB2 Repository](Insert_PCB2_Repo_Link_Here)
+    [🔗 Link to the PCB2 Repository](https://github.com/grandytsho/RM_micromouse26/tree/pcb2)
 
 ---
 
