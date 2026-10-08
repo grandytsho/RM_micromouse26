@@ -120,12 +120,12 @@ bool isWallRight(){
 bool isWallFront(){
   int front = getCorrectedReading(0);
   int front2 = getCorrectedReading(5);
-  return ((front > FRONT_WALL_DETECTION_THRESHOLD)&&(front2 > FRONT_WALL_DETECTION_THRESHOLD));
+  return ((front > FRONT_WALL_DETECTION_THRESHOLD)&&(front2 > FRONT2_WALL_DETECTION_THRESHOLD));
 }
 bool isWallFrontCollision(){
   int front = getCorrectedReading(0);
   int front2 = getCorrectedReading(5);
-  return ((front > FRONT_WALL_COLLISION_THRESHOLD)&&(front2 > FRONT_WALL_COLLISION_THRESHOLD));
+  return ((front > FRONT_WALL_COLLISION_THRESHOLD)&&(front2 > FRONT2_WALL_COLLISION_THRESHOLD));
 }
 void turn(float angleDeg){
   const int   upper         = 110;
