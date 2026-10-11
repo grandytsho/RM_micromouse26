@@ -11,9 +11,9 @@ float Kp_100 = 0.5;
 float Kd_100 = 0.15; 
 float Ki_100 = 0.0;
 
-float Kp_turn = 1.2;
+float Kp_turn = 1.1;
 float Ki_turn = 0.0;
-float Kd_turn = 0.015;
+float Kd_turn = 0.03;
 
 float Kp_align =0.4;
 float Kd_align = 0.01; 
@@ -29,16 +29,16 @@ static float         _approach_lastError = NAN;
 static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 504;
-int LEFT_MAX = 885;
-int RIGHT_SETPOINT = 481;
-int RIGHT_MAX = 907;
-int LEFT_WALL_THRESHOLD = 424; 
-int RIGHT_WALL_THRESHOLD = 324;
-int FRONT_WALL_DETECTION_THRESHOLD = 294;
-int FRONT2_WALL_DETECTION_THRESHOLD = 375;
-int FRONT_WALL_COLLISION_THRESHOLD = 414;
-int FRONT2_WALL_COLLISION_THRESHOLD = 447;
+int LEFT_SETPOINT = 462;
+int LEFT_MAX = 870;
+int RIGHT_SETPOINT = 460;
+int RIGHT_MAX = 870;
+int LEFT_WALL_THRESHOLD = 338; 
+int RIGHT_WALL_THRESHOLD = 290 ;
+int FRONT_WALL_DETECTION_THRESHOLD = 265;
+int FRONT2_WALL_DETECTION_THRESHOLD = 330;
+int FRONT_WALL_COLLISION_THRESHOLD = 375;
+int FRONT2_WALL_COLLISION_THRESHOLD = 404;
 
 int FRONT_MAX = 416; 
 int FRONT2_MAX = 576; 
@@ -78,7 +78,7 @@ void motor2Reverse(int speed) {
 }
 
 void motorStop() {
-  // 1. Hard Brake Phase (TB6612 short brake = both IN pins HIGH)
+  
   digitalWrite(M1_IN1, HIGH);
   digitalWrite(M1_IN2, HIGH);
   analogWrite(M1_PWM, 0); 
@@ -87,9 +87,8 @@ void motorStop() {
   digitalWrite(M2_IN2, HIGH);
   analogWrite(M2_PWM, 0);
   
-  delay(150); // Hold the brake for 150ms just like your old code
+  delay(150);
   
-  // 2. Coast / Standby Phase (TB6612 coast = both IN pins LOW)
   digitalWrite(M1_IN1, LOW);
   digitalWrite(M1_IN2, LOW);
   
@@ -107,7 +106,7 @@ void motor2Wraper(int speed){
   else motor2Forward(speed);
 }
 
-//wall detection functions
+
 bool isWallLeft(){
   int raw = getCorrectedReading(3);
   return (raw > LEFT_WALL_THRESHOLD);
@@ -129,8 +128,9 @@ bool isWallFrontCollision(){
 }
 void turn(float angleDeg){
   const int   upper         = 110;
-  const int   lower         = 30;
-  const float turnThreshold = 0.25f;   // degrees — slightly relaxed for stability
+  const int   lower         = 60;
+  const float turnThreshold = 1.0f; ////////////////c ////////9
+    // degrees — slightly relaxed for stability
   const float DERIV_ALPHA   = 0.25f;   // EMA weight for new sample (lower = smoother)
   const float DT_FLOOR      = 0.004f;  // FIX 1: 4 ms floor matches delay(5) reality
 
@@ -149,7 +149,7 @@ void turn(float angleDeg){
   unsigned long lastTime = millis();
 
   // Fast read: 2ms timeout prevents blocking
-  float startYaw = getYaw(2); 
+  float startYaw = getYaw(15); 
   delay(15);
 
   // A positive angleDeg turns right, negative turns left
@@ -166,7 +166,7 @@ void turn(float angleDeg){
     }
     
     // Fast read inside the loop
-    float currentYaw = getYaw(2); 
+    float currentYaw = getYaw(15); 
     float error = targetYaw - currentYaw;
 
     // Shortest path calculation (guarantees error is -180 to +180)

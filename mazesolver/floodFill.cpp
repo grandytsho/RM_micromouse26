@@ -3,13 +3,13 @@
 
 float distance = 23; 
 
-int cur_x = 5; 
+int cur_x = 0; 
 int cur_y = 0; 
-int start_x = 5; 
+int start_x = 0; 
 int start_y = 0; 
 
-int goal_x = 4; 
-int goal_y = 3;
+int goal_x = 7; 
+int goal_y = 7;
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 

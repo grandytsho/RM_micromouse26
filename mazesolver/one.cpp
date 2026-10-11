@@ -22,7 +22,7 @@ const char* sensorNames[NUM_SENSORS] = {
   "Front 2   "  // Sens: 38, Emit: 39
 };
 
-volatile int algoButtonPressCount = -1;
+volatile int algoButtonPressCount = 1;
 volatile int runmodeButtonPressCount = 0;
 volatile int currentModeButtonCount = 0;
 
@@ -77,8 +77,10 @@ void isrRightEncoder() {
 
 float getYaw(uint16_t timeoutMs = 15) {
     unsigned long start = millis();
+    bool updated = false;
+    
     while ((millis() - start) < timeoutMs) {
-        if (bno08x.getSensorEvent(&sensorValue)) {
+        while (bno08x.getSensorEvent(&sensorValue)) {
             if (sensorValue.sensorId == SH2_GAME_ROTATION_VECTOR) {
                 float qr = sensorValue.un.gameRotationVector.real;
                 float qi = sensorValue.un.gameRotationVector.i;
@@ -90,9 +92,10 @@ float getYaw(uint16_t timeoutMs = 15) {
                     1.0f - 2.0f * (sq(qj) + sq(qk))
                 );
                 currentYaw = yaw_rad * (180.0f / PI);
-                return currentYaw;  
+                updated = true; 
             }
         }
+        if (updated) return currentYaw;
     }
     return currentYaw;  
 }
@@ -219,7 +222,7 @@ void inithardware(){
   BT.println("IMU working");
   
   // Enable the missing data stream! (2500us = 400Hz refresh rate)
-  bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 2500); 
+  bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 5000); 
   
   // Give the sensor a moment to settle before the main loop starts
   delay(800); 
