@@ -3,13 +3,13 @@
 
 float distance = 23; 
 
-int cur_x = 0; 
+int cur_x = 7; 
 int cur_y = 0; 
-int start_x = 0; 
+int start_x = 7; 
 int start_y = 0; 
 
-int goal_x = 7; 
-int goal_y = 7;
+int goal_x = 3; 
+int goal_y = 3;
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
@@ -369,9 +369,7 @@ void moveFast(std::vector<int> path){
     float total_distance = distance*number_of_same_headings - 2;
     BT.print("Moving distance: "); BT.println(total_distance); 
     centerUntilDistance(total_distance); 
-
-    i++; 
-
+    i++;
     }
 }
 
@@ -417,7 +415,7 @@ int executeFloodFill() {
     }
     delay(500);
     BT.println("Starting final optimized speedrun run...");
-    BASE_SPEED = BASE_SPEED+50;
+    MAX_BASE_SPEED = MAX_BASE_SPEED+10;
     moveFast(path);
     BT.println("Final speedrun moves taken: " + String(times_moved));
     calculateCost(path); 

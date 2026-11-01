@@ -106,12 +106,12 @@ void loop() {
     if(incomingChar == 'b'){
       BT.print("\nEnter base speed: "); 
       while (BT.available() == 0) { delay(1); }
-      BASE_SPEED = BT.parseInt();
+      MAX_BASE_SPEED = BT.parseInt();
       BT.print("\nBase Speed: ");
-      BT.println(BASE_SPEED);
+      BT.println(MAX_BASE_SPEED);
     }
     if(incomingChar == 'e'){
-      BT.print("\n e value(13)"); 
+      BT.print("\n e value:(12)"); 
       while (BT.available() == 0) { delay(1); }
       e = BT.parseInt();
       BT.print("\ne val: ");
@@ -175,7 +175,7 @@ void loop() {
 //     }
 //   }
 // }
-int i = 1;
+// int i = 1;
 // void loop(){
 //   if(i==1){
 //     turn(-25.0);
