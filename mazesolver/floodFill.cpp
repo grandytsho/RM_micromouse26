@@ -20,14 +20,25 @@ int times_moved = 0;
 bool speedrun = false;
 
 void turnTo(int target_heading) {
-    int diff = target_heading - current_heading;
-    if (diff == 1 || diff == -3) {
-        turn(-90.0f); 
-    } else if (diff == -1 || diff == 3) {
-        turn(90.0f);  
-    } else if (diff == 2 || diff == -2) {
-        turn(180.0f); 
+    if (target_heading == current_heading) return;
+
+
+    int diff = (target_heading - current_heading) % 8;
+    
+    if (diff < 0) {
+        diff += 8;
     }
+
+    switch (diff) {
+        case 1: turn(-45.0f); break;  // 1 step right
+        case 2: turn(-90.0f); break;  // 2 steps right
+        case 3: turn(-135.0f); break; // 3 steps right
+        case 4: turn(180.0f); break;  // U-turn
+        case 5: turn(135.0f); break;  // 3 steps left
+        case 6: turn(90.0f); break;   // 2 steps left
+        case 7: turn(45.0f); break;   // 1 step left
+    }
+    
     current_heading = (heading)target_heading;
 }
 
@@ -349,11 +360,48 @@ std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]) {
 void moveNormal(std::vector<int> path) {
     for(size_t i = 0; i < path.size(); i++){
         turnTo(path[i]); 
-        current_heading = (heading)path[i]; 
+        current_heading = (heading)path[i];
         centerUntilDistance(distance); 
     }
 }
 
+std::vector<int> smoothPath(const std::vector<int>& raw_path){
+    std::vector<int> smooth_path; 
+    size_t i = 0; 
+
+    while(i < raw_path.size()){
+        if(i+1 < raw_path.size()){
+            int curr_dir = raw_path[i];
+            int next_dir = raw_path[i+1];
+
+            if((curr_dir == North && next_dir == East) || (curr_dir == East && next_dir == North)){
+                smooth_path.push_back(NorthEast); 
+                i = i+2; continue; 
+            }
+
+            if((curr_dir == South && next_dir == East) || (curr_dir == East && next_dir == South)){
+                smooth_path.push_back(SouthEast); 
+                i = i+2; continue; 
+            }
+
+            if((curr_dir == South && next_dir == West) || (curr_dir == West && next_dir == South)){
+                smooth_path.push_back(SouthWest); 
+                i = i+2; continue; 
+            }
+
+            if((curr_dir == North && next_dir == West) || (curr_dir == West && next_dir == North)){
+                smooth_path.push_back(NorthWest); 
+                i = i+2; continue; 
+            }
+        }
+
+        smooth_path.push_back(raw_path[i]); 
+        i++; 
+    }
+
+    return smooth_path; 
+
+}
 void moveFast(std::vector<int> path){
     uint8_t i = 0; 
     while(i < path.size()){
@@ -366,11 +414,20 @@ void moveFast(std::vector<int> path){
     }
     if(current_path_heading != current_heading){
     turnTo(current_path_heading);}
-    float total_distance = distance*number_of_same_headings - 2;
+    float total_distance;
+    if(isDiagonalHeading(current_heading)){
+        total_distance = distance*number_of_same_headings*M_SQRT2 - 2; 
+    }else{
+        total_distance = distance*number_of_same_headings - 2; 
+    }
     BT.print("Moving distance: "); BT.println(total_distance); 
-    centerUntilDistance(total_distance); 
+    centerUntilDistance(total_distance,true,isDiagonalHeading(current_heading)); 
     i++;
     }
+}
+
+bool isDiagonalHeading(int curr){
+    return (curr == NorthEast || curr == NorthWest || curr == SouthEast || curr == SouthWest);
 }
 
 int executeFloodFill() {  

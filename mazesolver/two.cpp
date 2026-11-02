@@ -325,8 +325,8 @@ void applyPIDCentering(int rawLeft, int rawRight, int currentBaseSpeed){
   motor2Forward(rightSpeed);
 }
 
-// Add a default parameter 'stopAtEnd' (defaults to true for standard moves)
-void centerUntilDistance(float dist, bool stopAtEnd = true) {
+// Add a default parameter 'stopAtEnd' and 'isDiagonal'
+void centerUntilDistance(float dist, bool stopAtEnd = true, bool isDiagonal = false) {
   long startTicks = (leftEncoderTicks + rightEncoderTicks)/2;
   long totalTargetTicks = dist * ((TICKS_PER_CM_LEFT + TICKS_PER_CM_RIGHT)/2.0);
   long TARGET_TICKS = startTicks + totalTargetTicks;
@@ -369,10 +369,16 @@ void centerUntilDistance(float dist, bool stopAtEnd = true) {
       // Safeguard
       dynamicBaseSpeed = constrain(dynamicBaseSpeed, MIN_BASE_SPEED, moveMaxSpeed);
 
-      int currentLeft = getCorrectedReading(3);
-      int currentRight = getCorrectedReading(1); 
-      
-      applyPIDCentering(currentLeft, currentRight, dynamicBaseSpeed); 
+      // --- NEW LOGIC FOR DIAGONALS ---
+      if (isDiagonal) {
+          // Force IMU-only steering to ignore jagged corner pillars
+          applyPIDCentering(0, 0, dynamicBaseSpeed); 
+      } else {
+          // Standard cardinal wall following
+          int currentLeft = getCorrectedReading(3);
+          int currentRight = getCorrectedReading(1); 
+          applyPIDCentering(currentLeft, currentRight, dynamicBaseSpeed); 
+      }
       
       isStopped = false; // We are moving
     }

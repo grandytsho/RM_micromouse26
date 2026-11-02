@@ -14,7 +14,7 @@ const int MAZE_SIZE = 8;
 const int straight_cost = 1; 
 const int turn_cost = 2; 
 
-enum heading { North = 0, East, South, West };
+enum heading { North = 0, NorthEast, East, SouthEast, South, SouthWest, West, NorthWest };
 
 struct Cell {
     int distance; 
