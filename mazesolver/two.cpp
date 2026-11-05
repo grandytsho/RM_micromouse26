@@ -20,25 +20,25 @@ float Kd_align = 0.01;
 
 volatile float targetYaw = 0;
 int TURN_THRESHOLD = 10; 
-const float IMU_SCALE        = 1.0f; 
-const float BOTH_WALL_BLEND  = 0.85f;
-const float ONE_WALL_BLEND   = 0.60f;
+const float IMU_SCALE        = 1.0f; //not using
+const float BOTH_WALL_BLEND  = 0.85f;//not using
+const float ONE_WALL_BLEND   = 0.60f;//not using
 
 static unsigned long _approach_lastTime  = 0;
 static float         _approach_lastError = NAN;
 static float         _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 461;
-int LEFT_MAX = 812;
-int RIGHT_SETPOINT = 426;
-int RIGHT_MAX = 862;
-int LEFT_WALL_THRESHOLD = 387;
-int RIGHT_WALL_THRESHOLD = 303;
-int FRONT_WALL_DETECTION_THRESHOLD = 296;
-int FRONT2_WALL_DETECTION_THRESHOLD = 290;
-int FRONT_WALL_COLLISION_THRESHOLD = 423;
-int FRONT2_WALL_COLLISION_THRESHOLD = 404;
+int LEFT_SETPOINT = 510;
+int LEFT_MAX = 880;
+int RIGHT_SETPOINT = 410;
+int RIGHT_MAX = 780;
+int LEFT_WALL_THRESHOLD = 313;
+int RIGHT_WALL_THRESHOLD = 215;
+int FRONT_WALL_DETECTION_THRESHOLD = 410;
+int FRONT2_WALL_DETECTION_THRESHOLD = 360;
+int FRONT_WALL_COLLISION_THRESHOLD = 495;
+int FRONT2_WALL_COLLISION_THRESHOLD = 525;
 
 int FRONT_MAX = 416; 
 int FRONT2_MAX = 576;
@@ -48,15 +48,15 @@ const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT/WHEEL_CIRCUMFERENCE;
 const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
 
 int MAX_BASE_SPEED = 120; // Cruising speed
-int MIN_BASE_SPEED = 40;  // Minimum speed to overcome friction
+int MIN_BASE_SPEED_START =40;  // Minimum speed to overcome friction
+int MIN_BASE_SPEED_STOP =0;
 long ACCEL_TICKS = 300;   // How many ticks it takes to reach max speed
-long DECEL_TICKS = 300;   // How many ticks before target to start slowing down
+long DECEL_TICKS = 600;   // How many ticks before target to start slowing down
 bool isStopped = true;
 
 
 bool wallFollower = false;
 
-// Motor Control Functions
 void motor1Forward(int speed) {
   digitalWrite(M1_IN1, LOW);
   digitalWrite(M1_IN2, HIGH);
@@ -84,7 +84,7 @@ void motor2Reverse(int speed) {
 void motorStop() {
   digitalWrite(M1_IN1, HIGH);
   digitalWrite(M1_IN2, HIGH);
-  analogWrite(M1_PWM, 0); 
+  analogWrite(M1_PWM, 0);
   
   digitalWrite(M2_IN1, HIGH);
   digitalWrite(M2_IN2, HIGH);
@@ -140,7 +140,7 @@ bool isWallFrontCollision(){
 void turn(float angleDeg){
   const int   upper         = 110;
   const int   lower         = 60;
-  const float turnThreshold = 1.0f; ////////////////c ////////9
+  const float turnThreshold = 1.0f; 
     // degrees — slightly relaxed for stability
   const float DERIV_ALPHA   = 0.25f;   // EMA weight for new sample (lower = smoother)
   const float DT_FLOOR      = 0.004f;  // FIX 1: 4 ms floor matches delay(5) reality
@@ -326,71 +326,84 @@ void applyPIDCentering(int rawLeft, int rawRight, int currentBaseSpeed){
 }
 
 // Add a default parameter 'stopAtEnd' and 'isDiagonal'
-void centerUntilDistance(float dist, bool stopAtEnd = true, bool isDiagonal = false) {
+float centerUntilDistance(float dist, bool stopAtEnd = true, bool isDiagonal = false) {
+  // Capture this once. isStopped gets set to false inside the loop,
+  // so reading it live would end the accel ramp after the first iteration.
+  const bool startedFromStop = isStopped;
+  // Diagonals: front sensors see corner pillars/side walls at 45 deg, so skip the front check
+  const bool checkFront = !isDiagonal;
+
   long startTicks = (leftEncoderTicks + rightEncoderTicks)/2;
-  long totalTargetTicks = dist * ((TICKS_PER_CM_LEFT + TICKS_PER_CM_RIGHT)/2.0);
+  long totalTargetTicks = dist * (TICKS_PER_CM_LEFT + TICKS_PER_CM_RIGHT)/2.0;
   long TARGET_TICKS = startTicks + totalTargetTicks;
 
-  // --- SHORT MOVE LOGIC (TRIANGULAR PROFILE) ---
-  long moveAccelTicks = ACCEL_TICKS;
-  long moveDecelTicks = DECEL_TICKS;
-  int moveMaxSpeed = MAX_BASE_SPEED;
+  // --- TRAPEZOIDAL PROFILE SETUP ---
+  long moveAccelTicks = startedFromStop ? ACCEL_TICKS : 0;
+  long moveDecelTicks = stopAtEnd ? DECEL_TICKS : 0;
+  int  moveMaxSpeed   = MAX_BASE_SPEED;
 
-  if (isStopped && stopAtEnd && (totalTargetTicks < (ACCEL_TICKS + DECEL_TICKS))) {
-    // Cut the distances in half
-    moveAccelTicks = totalTargetTicks / 2;
-    moveDecelTicks = totalTargetTicks - moveAccelTicks; 
-    
-    // Lower the peak speed so the acceleration slope (aggressiveness) stays the same
-    moveMaxSpeed = map(moveAccelTicks, 0, ACCEL_TICKS, MIN_BASE_SPEED, MAX_BASE_SPEED);
+  // Short move: ramps would eat the whole distance (triangle).
+  // Instead, cap the ramps at a fraction of the move so a cruise
+  // plateau always remains, and lower the peak speed so the
+  // acceleration slope stays the same.
+  const float MAX_RAMP_FRACTION = 0.6f;   // ramps use at most 60% of the move
+  long rampTicks    = moveAccelTicks + moveDecelTicks;
+  long maxRampTicks = (long)(totalTargetTicks * MAX_RAMP_FRACTION);
+
+  if (rampTicks > maxRampTicks && rampTicks > 0) {
+    float scale = (float)maxRampTicks / (float)rampTicks;
+    moveAccelTicks = (long)(moveAccelTicks * scale);
+    moveDecelTicks = (long)(moveDecelTicks * scale);
+    moveMaxSpeed   = MIN_BASE_SPEED_START + (int)((MAX_BASE_SPEED - MIN_BASE_SPEED_START) * scale);
   }
 
-  while(true){
-    BT.print("leftencoderTicks: ");BT.println(leftEncoderTicks);
-    BT.print("rightEncoderTicks: ");BT.println(rightEncoderTicks);
-    long currentTicks = (leftEncoderTicks + rightEncoderTicks)/2;
-    long ticksMoved = currentTicks - startTicks;
+  while (true) {
+    long currentTicks   = (leftEncoderTicks + rightEncoderTicks) / 2;
+    long ticksMoved     = currentTicks - startTicks;
     long ticksRemaining = TARGET_TICKS - currentTicks;
 
-    if(ticksRemaining > 0 && !isWallFrontCollision()) {
-      
-      int dynamicBaseSpeed = moveMaxSpeed;
+    if (ticksRemaining > 0 && !isWallFrontCollision()) {
 
-      // 1. ACCELERATION PHASE
-      if (isStopped && (ticksMoved < moveAccelTicks)) {
-        dynamicBaseSpeed = map(ticksMoved, 0, moveAccelTicks, MIN_BASE_SPEED, moveMaxSpeed);
+      // Start at cruise speed (the flat top of the trapezoid)
+      long dynamicBaseSpeed = moveMaxSpeed;
+
+      // 1. ACCELERATION RAMP
+      if (moveAccelTicks > 0 && ticksMoved < moveAccelTicks) {
+        long accelSpeed = map(ticksMoved, 0, moveAccelTicks, MIN_BASE_SPEED_START, moveMaxSpeed);
+        if (accelSpeed < dynamicBaseSpeed) dynamicBaseSpeed = accelSpeed;
       }
-      
-      // 2. DECELERATION PHASE
-      if (stopAtEnd && (ticksRemaining < moveDecelTicks)) {
-        dynamicBaseSpeed = map(ticksRemaining, moveDecelTicks, 0, moveMaxSpeed, MIN_BASE_SPEED);
+
+      // 2. DECELERATION RAMP
+      if (moveDecelTicks > 0 && ticksRemaining < moveDecelTicks) {
+        long decelSpeed = map(ticksRemaining, moveDecelTicks, 0, moveMaxSpeed, MIN_BASE_SPEED_STOP);
+        if (decelSpeed < dynamicBaseSpeed) dynamicBaseSpeed = decelSpeed;
       }
 
       // Safeguard
-      dynamicBaseSpeed = constrain(dynamicBaseSpeed, MIN_BASE_SPEED, moveMaxSpeed);
-
-      // --- NEW LOGIC FOR DIAGONALS ---
-      if (isDiagonal) {
-          // Force IMU-only steering to ignore jagged corner pillars
-          applyPIDCentering(0, 0, dynamicBaseSpeed); 
-      } else {
-          // Standard cardinal wall following
-          int currentLeft = getCorrectedReading(3);
-          int currentRight = getCorrectedReading(1); 
-          applyPIDCentering(currentLeft, currentRight, dynamicBaseSpeed); 
-      }
+      dynamicBaseSpeed = constrain(dynamicBaseSpeed, MIN_BASE_SPEED_START, moveMaxSpeed);
       
       isStopped = false; // We are moving
+      float rawL = getCorrectedReading(3);
+      float rawR = getCorrectedReading(1);
+      applyPIDCentering(rawL, rawR, (int)dynamicBaseSpeed);
     }
     else {
-      // Target Reached
-      if(!wallFollower && stopAtEnd){ 
-        motorStop(); 
+      BT.print("cUD exit: remaining="); BT.print(ticksRemaining);
+      BT.print(" diag="); BT.println(isDiagonal);
+      if (!wallFollower && stopAtEnd) {
+        motorStop();
       }
-      break; 
+      break;
     }
     delay(2);
   }
+  long currentTicks   = (leftEncoderTicks + rightEncoderTicks) / 2;
+  long moved_ticks = (currentTicks - startTicks); 
+  float AVG_TICKS_PER_CM = (TICKS_PER_CM_LEFT + TICKS_PER_CM_RIGHT)/2.0; 
+
+  return (moved_ticks/AVG_TICKS_PER_CM); 
+
+
 }
 
 void centerUntilWall(){
