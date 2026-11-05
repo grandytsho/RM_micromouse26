@@ -69,3 +69,6 @@ std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]);
 void moveNormal(std::vector<int> path);
 void moveFast(std::vector<int> path);
 int executeFloodFill();
+bool isDiagonalHeading(int curr);
+void testHardcodedPath();
+void markWall(int cur_x, int cur_y, heading h);

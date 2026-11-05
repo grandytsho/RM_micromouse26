@@ -140,56 +140,35 @@ void loop() {
       goal_y = BT.parseInt(); 
       BT.print("Goal Y: "); BT.println(goal_y); 
     }
+
+    if(incomingChar == 'S'){
+      // Sensor dump: front readings vs collision threshold
+      for(int k = 0; k < 5; k++){
+        int f1 = getCorrectedReadingAvg(0);
+        int f2 = getCorrectedReadingAvg(5);
+        BT.print("F1: "); BT.print(f1);
+        BT.print(" | F2: "); BT.print(f2);
+        BT.print(" | avg: "); BT.print((f1 + f2) / 2);
+        BT.print(" | collision thr avg: "); BT.print((FRONT_WALL_COLLISION_THRESHOLD + FRONT2_WALL_COLLISION_THRESHOLD) / 2);
+        BT.print(" | L: "); BT.print((int)getCorrectedReadingAvg(3));
+        BT.print(" | R: "); BT.println((int)getCorrectedReadingAvg(1));
+        delay(200);
+      }
+    }
+
+    if(incomingChar == 'h'){
+      BT.print("Doing diagonals");
+      wallFollower = false; 
+      testHardcodedPath(); 
+    }
   } // <-- This brace closes the if(BT.available() > 0) statement
 }
 
 
-// static int lastRunmodePresses = runmodeButtonPressCount; 
-
-// void loop() {
-  
-//   if (lastRunmodePresses != runmodeButtonPressCount) {
-//     lastRunmodePresses = runmodeButtonPressCount; 
-//     has_started = true; 
-//     BT.println("Starting Algorithm!");
-//   }
-
-  
-//   if (has_started) {
-//     delay(1000);
-//     if (algoButtonPressCount == 0) {
-//       wallFollower = false;
-//       executeFloodFill();  
-//       has_started = false;
-//       lastRunmodePresses = runmodeButtonPressCount; 
-//     }
-//     else if (algoButtonPressCount == 1) {
-//       wallFollower = true;
-//       while(true)
-//         leftWallFollow();
-//     }
-//     else if (algoButtonPressCount == 2) {
-//       wallFollower = true;
-//       while(true)
-//         rightWallFollow();
-//     }
-//   }
-// }
-// int i = 1;
-// void loop(){
-//   if(i==1){
-//     turn(-25.0);
-//     i++;
-//   }
-//   turn(50);
-//   turn(-50);
-// }
 void rightWallFollow() { 
   //Turn right
   if (!isWallRight()) {
     BT.println("NO RIGHT WALL");
-    // motorStop();
-    // delay(1000);
     centerUntilDistance(e);
     motorStop();
     delay(1);
@@ -208,7 +187,6 @@ void rightWallFollow() {
     BT.println("turning Left");
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
-    //centerUntilDistance(2);
     delay(1);
     motorStop();
     turn(90.0f);
@@ -225,17 +203,12 @@ void rightWallFollow() {
   }
   
   delay(5);
-  // BT.print("Right:");BT.println(isWallRight());
-  // BT.print("Left:");BT.println(isWallLeft());
-  // BT.print("Front:");BT.println(isWallFront());
 }
 
 void leftWallFollow() { 
   //Turn left
   if (!isWallLeft()) {
     BT.println("NO Left WALL|Left reading: "); BT.println(getCorrectedReading(3));
-    // motorStop();
-    // delay(1000);
     centerUntilDistance(e);
     motorStop();
     delay(1);
@@ -256,7 +229,6 @@ void leftWallFollow() {
     BT.println("turning Right");
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
-    //centerUntilDistance(2);
     motorStop(); 
     delay(5);
     turn(-90.0f);
@@ -274,7 +246,4 @@ void leftWallFollow() {
     delay(5);
   }
   delay(5);
-  // BT.print("Right:");BT.println(isWallRight());
-  // BT.print("Left:");BT.println(isWallLeft());
-  // BT.print("Front:");BT.println(isWallFront());
 }

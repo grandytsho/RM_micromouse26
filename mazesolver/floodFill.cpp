@@ -3,13 +3,13 @@
 
 float distance = 23; 
 
-int cur_x = 7; 
+int cur_x = 0; 
 int cur_y = 0; 
-int start_x = 7; 
+int start_x = 0; 
 int start_y = 0; 
 
-int goal_x = 3; 
-int goal_y = 3;
+int goal_x = 7; 
+int goal_y = 7;
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
@@ -40,6 +40,23 @@ void turnTo(int target_heading) {
     }
     
     current_heading = (heading)target_heading;
+}
+
+void markWall(int cur_x, int cur_y, heading h){
+    switch(h){
+        case North: maze[cur_x][cur_y].up = true;
+            if(cur_y<MAZE_SIZE-1) maze[cur_x][cur_y+1].down = true; 
+            break; 
+        case South: maze[cur_x][cur_y].down = true; 
+            if(cur_y>0) maze[cur_x][cur_y-1].up = true; 
+            break; 
+        case East: maze[cur_x][cur_y].right = true; 
+            if(cur_x < MAZE_SIZE-1) maze[cur_x+1][cur_y].left = true; 
+            break; 
+        case West: maze[cur_x][cur_y].left = true; 
+            if(cur_x>0) maze[cur_x-1][cur_y].right = true;
+            break; 
+    }
 }
 
 void copyMap() {
@@ -231,7 +248,13 @@ void mousemove() {
     turnTo(target_heading);
     
 
-    centerUntilDistance(distance);
+   float distance_moved = centerUntilDistance(distance);
+    if(distance_moved < distance*0.9){
+        markWall(cur_x,cur_y,current_heading); 
+        BT.println("Didnt move full distance, probably exited due to wall collision"); 
+        floodfill(); 
+        return; 
+    }
     times_moved++; 
     
     if (current_heading == North) cur_y++;
@@ -478,4 +501,24 @@ int executeFloodFill() {
     calculateCost(path); 
 
     return 0; 
+}
+
+void testHardcodedPath() {
+    BT.println("Starting hardcoded path test...");
+    
+    current_heading = North; 
+    
+    MAX_BASE_SPEED = 90; 
+
+    std::vector<int> test_path = {
+        North, North,         // 2 cells straight
+        NorthEast, NorthEast, // 2 cells diagonal
+        East                  // 1 cell straight
+    };
+
+    BT.println("Sending path to moveFast()...");
+    moveFast(test_path);
+    
+    BT.println("Hardcoded test complete.");
+    motorStop();
 }
