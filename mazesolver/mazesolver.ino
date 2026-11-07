@@ -49,17 +49,17 @@ void loop() {
     if (incomingChar == 'p') {
       BT.print("\nEnter KP  value: ");
       while (BT.available() == 0) { delay(1); }
-      Kp_turn= BT.parseFloat(); 
+      Kp= BT.parseFloat(); 
       BT.print("\nKP  value: "); 
-      BT.println(Kp_turn);
+      BT.println(Kp);
     }
     
     if (incomingChar == 'd') {
       BT.print("\nEnter KD value: "); 
       while (BT.available() == 0) { delay(1); }
-      Kd_turn = BT.parseFloat(); 
+      Kd = BT.parseFloat(); 
       BT.print("\nKD value: "); 
-      BT.println(Kd_turn);
+      BT.println(Kd);
     }
 
     if (incomingChar == 'i') {

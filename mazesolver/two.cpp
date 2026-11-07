@@ -3,6 +3,10 @@
 #include <Arduino.h>
 #include <cmath>
 
+float Kp_old = 0.7;
+float Kd_old = 0.15; 
+float Ki_old = 0.0;
+
 float Kp = 0.7;
 float Kd = 0.15; 
 float Ki = 0.0;
@@ -47,8 +51,8 @@ static float _deriv_filtered = 0.0f;
 const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT/WHEEL_CIRCUMFERENCE;
 const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
 
-int MAX_BASE_SPEED = 120; // Cruising speed
-int MIN_BASE_SPEED_START =40;  // Minimum speed to overcome friction
+int MAX_BASE_SPEED = 140; // Cruising speed
+int MIN_BASE_SPEED_START =50;  // Minimum speed to overcome friction
 int MIN_BASE_SPEED_STOP =0;
 long ACCEL_TICKS = 300;   // How many ticks it takes to reach max speed
 long DECEL_TICKS = 600;   // How many ticks before target to start slowing down
