@@ -1,15 +1,15 @@
 #include <vector>
 #include "floodFill.h"
 
-float distance = 23; 
+float distance = 25; 
 
-int cur_x = 0; 
+int cur_x = 7; 
 int cur_y = 0; 
-int start_x = 0; 
+int start_x = 7; 
 int start_y = 0; 
 
-int goal_x = 7; 
-int goal_y = 7;
+int goal_x = 3; 
+int goal_y = 3;
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
@@ -20,43 +20,15 @@ int times_moved = 0;
 bool speedrun = false;
 
 void turnTo(int target_heading) {
-    if (target_heading == current_heading) return;
-
-
-    int diff = (target_heading - current_heading) % 8;
-    
-    if (diff < 0) {
-        diff += 8;
+    int diff = target_heading - current_heading;
+    if (diff == 1 || diff == -3) {
+        turn(-90.0f); 
+    } else if (diff == -1 || diff == 3) {
+        turn(90.0f);  
+    } else if (diff == 2 || diff == -2) {
+        turn(180.0f); 
     }
-
-    switch (diff) {
-        case 1: turn(-45.0f); break;  // 1 step right
-        case 2: turn(-90.0f); break;  // 2 steps right
-        case 3: turn(-135.0f); break; // 3 steps right
-        case 4: turn(180.0f); break;  // U-turn
-        case 5: turn(135.0f); break;  // 3 steps left
-        case 6: turn(90.0f); break;   // 2 steps left
-        case 7: turn(45.0f); break;   // 1 step left
-    }
-    
     current_heading = (heading)target_heading;
-}
-
-void markWall(int cur_x, int cur_y, heading h){
-    switch(h){
-        case North: maze[cur_x][cur_y].up = true;
-            if(cur_y<MAZE_SIZE-1) maze[cur_x][cur_y+1].down = true; 
-            break; 
-        case South: maze[cur_x][cur_y].down = true; 
-            if(cur_y>0) maze[cur_x][cur_y-1].up = true; 
-            break; 
-        case East: maze[cur_x][cur_y].right = true; 
-            if(cur_x < MAZE_SIZE-1) maze[cur_x+1][cur_y].left = true; 
-            break; 
-        case West: maze[cur_x][cur_y].left = true; 
-            if(cur_x>0) maze[cur_x-1][cur_y].right = true;
-            break; 
-    }
 }
 
 void copyMap() {
@@ -248,13 +220,7 @@ void mousemove() {
     turnTo(target_heading);
     
 
-   float distance_moved = centerUntilDistance(distance);
-    if(distance_moved < distance*0.9){
-        markWall(cur_x,cur_y,current_heading); 
-        BT.println("Didnt move full distance, probably exited due to wall collision"); 
-        floodfill(); 
-        return; 
-    }
+    centerUntilDistance(distance,true);
     times_moved++; 
     
     if (current_heading == North) cur_y++;
@@ -383,48 +349,11 @@ std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]) {
 void moveNormal(std::vector<int> path) {
     for(size_t i = 0; i < path.size(); i++){
         turnTo(path[i]); 
-        current_heading = (heading)path[i];
-        centerUntilDistance(distance); 
+        current_heading = (heading)path[i]; 
+        centerUntilDistance(distance,true); 
     }
 }
 
-std::vector<int> smoothPath(const std::vector<int>& raw_path){
-    std::vector<int> smooth_path; 
-    size_t i = 0; 
-
-    while(i < raw_path.size()){
-        if(i+1 < raw_path.size()){
-            int curr_dir = raw_path[i];
-            int next_dir = raw_path[i+1];
-
-            if((curr_dir == North && next_dir == East) || (curr_dir == East && next_dir == North)){
-                smooth_path.push_back(NorthEast); 
-                i = i+2; continue; 
-            }
-
-            if((curr_dir == South && next_dir == East) || (curr_dir == East && next_dir == South)){
-                smooth_path.push_back(SouthEast); 
-                i = i+2; continue; 
-            }
-
-            if((curr_dir == South && next_dir == West) || (curr_dir == West && next_dir == South)){
-                smooth_path.push_back(SouthWest); 
-                i = i+2; continue; 
-            }
-
-            if((curr_dir == North && next_dir == West) || (curr_dir == West && next_dir == North)){
-                smooth_path.push_back(NorthWest); 
-                i = i+2; continue; 
-            }
-        }
-
-        smooth_path.push_back(raw_path[i]); 
-        i++; 
-    }
-
-    return smooth_path; 
-
-}
 void moveFast(std::vector<int> path){
     uint8_t i = 0; 
     while(i < path.size()){
@@ -437,20 +366,11 @@ void moveFast(std::vector<int> path){
     }
     if(current_path_heading != current_heading){
     turnTo(current_path_heading);}
-    float total_distance;
-    if(isDiagonalHeading(current_heading)){
-        total_distance = distance*number_of_same_headings*M_SQRT2 - 2; 
-    }else{
-        total_distance = distance*number_of_same_headings - 2; 
-    }
+    float total_distance = distance*number_of_same_headings - 2;
     BT.print("Moving distance: "); BT.println(total_distance); 
-    centerUntilDistance(total_distance,true,isDiagonalHeading(current_heading)); 
+    centerUntilDistance(total_distance, true); 
     i++;
     }
-}
-
-bool isDiagonalHeading(int curr){
-    return (curr == NorthEast || curr == NorthWest || curr == SouthEast || curr == SouthWest);
 }
 
 int executeFloodFill() {  
@@ -501,24 +421,4 @@ int executeFloodFill() {
     calculateCost(path); 
 
     return 0; 
-}
-
-void testHardcodedPath() {
-    BT.println("Starting hardcoded path test...");
-    
-    current_heading = North; 
-    
-    MAX_BASE_SPEED = 90; 
-
-    std::vector<int> test_path = {
-        North, North,         // 2 cells straight
-        NorthEast, NorthEast, // 2 cells diagonal
-        East                  // 1 cell straight
-    };
-
-    BT.println("Sending path to moveFast()...");
-    moveFast(test_path);
-    
-    BT.println("Hardcoded test complete.");
-    motorStop();
 }

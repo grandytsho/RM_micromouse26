@@ -14,7 +14,7 @@ const int MAZE_SIZE = 8;
 const int straight_cost = 1; 
 const int turn_cost = 2; 
 
-enum heading { North = 0, NorthEast, East, SouthEast, South, SouthWest, West, NorthWest };
+enum heading { North = 0, East, South, West };
 
 struct Cell {
     int distance; 
@@ -69,6 +69,3 @@ std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]);
 void moveNormal(std::vector<int> path);
 void moveFast(std::vector<int> path);
 int executeFloodFill();
-bool isDiagonalHeading(int curr);
-void testHardcodedPath();
-void markWall(int cur_x, int cur_y, heading h);

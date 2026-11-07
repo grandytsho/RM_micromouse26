@@ -156,11 +156,6 @@ void loop() {
       }
     }
 
-    if(incomingChar == 'h'){
-      BT.print("Doing diagonals");
-      wallFollower = false; 
-      testHardcodedPath(); 
-    }
   } // <-- This brace closes the if(BT.available() > 0) statement
 }
 
@@ -169,11 +164,11 @@ void rightWallFollow() {
   //Turn right
   if (!isWallRight()) {
     BT.println("NO RIGHT WALL");
-    centerUntilDistance(e);
+    centerUntilDistance(e,false);
     motorStop();
     delay(1);
     turn(-90.0f);
-    centerUntilDistance(a);
+    centerUntilDistance(a,false);
     delay(5);
   }
   //Drive forward using PID
@@ -190,7 +185,7 @@ void rightWallFollow() {
     delay(1);
     motorStop();
     turn(90.0f);
-    centerUntilDistance(a);
+    centerUntilDistance(a,false);
     delay(5);
   }
   //U-Turn
@@ -209,11 +204,11 @@ void leftWallFollow() {
   //Turn left
   if (!isWallLeft()) {
     BT.println("NO Left WALL|Left reading: "); BT.println(getCorrectedReading(3));
-    centerUntilDistance(e);
+    centerUntilDistance(e,false);
     motorStop();
     delay(1);
     turn(90.0f);
-    centerUntilDistance(a);
+    centerUntilDistance(a,false);
     delay(5);
   }
   //Drive forward using PID
@@ -232,7 +227,7 @@ void leftWallFollow() {
     motorStop(); 
     delay(5);
     turn(-90.0f);
-    centerUntilDistance(a);
+    centerUntilDistance(a,false);
     delay(5);
   }
   //U-Turn
