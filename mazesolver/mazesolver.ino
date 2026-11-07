@@ -156,7 +156,7 @@ void loop() {
       }
     }
 
-  } // <-- This brace closes the if(BT.available() > 0) statement
+  } 
 }
 
 
