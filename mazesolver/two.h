@@ -44,6 +44,7 @@ bool isWallFrontCollision();
 void turn(float angleDeg);
 void applyPIDCentering(int rawLeft, int rawRight, int currentBaseSpeed = 120);
 void centerUntilDistance(float dist, bool stopAtEnd = true);
+void centerUntilDistanceWallFollow(float dist);
 void centerUntilWall();
 void alignToFrontWall();
 void approachAndSquareUp(int rawFront, int rawFront2);

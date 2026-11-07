@@ -33,12 +33,12 @@ static float _approach_lastError = NAN;
 static float _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 510;
-int LEFT_MAX = 880;
-int RIGHT_SETPOINT = 410;
-int RIGHT_MAX = 780;
-int LEFT_WALL_THRESHOLD = 313;
-int RIGHT_WALL_THRESHOLD = 215;
+int LEFT_SETPOINT = 555;
+int LEFT_MAX = 860;
+int RIGHT_SETPOINT = 534;
+int RIGHT_MAX = 930;
+int LEFT_WALL_THRESHOLD = 317;
+int RIGHT_WALL_THRESHOLD = 330;
 int FRONT_WALL_DETECTION_THRESHOLD = 410;
 int FRONT2_WALL_DETECTION_THRESHOLD = 360;
 int FRONT_WALL_COLLISION_THRESHOLD = 495;
@@ -409,5 +409,24 @@ void centerUntilWall() {
       motorStop();  // Good practice to ensure it stops when a wall is detected
       return;
     }
+  }
+}
+void centerUntilDistanceWallFollow(float dist){
+  long currentTicks = (leftEncoderTicks + rightEncoderTicks)/2;
+  long TARGET_TICKS = dist * ((TICKS_PER_CM_LEFT + TICKS_PER_CM_RIGHT)/2.0) + currentTicks;
+  while(true){
+    currentTicks = (leftEncoderTicks + rightEncoderTicks)/2;
+    if(currentTicks < TARGET_TICKS&& !isWallFrontCollision()){
+      int currentLeft = getCorrectedReading(3);
+      int currentRight = getCorrectedReading(1); 
+      applyPIDCentering(currentLeft,currentRight,MAX_BASE_SPEED); 
+    }
+    else{
+      if(!wallFollower){motorStop();}
+      BT.print("KP value: ");BT.println(Kp);
+      BT.print("KD value: ");BT.println(Kd); 
+      break; 
+    }
+    delay(2);
   }
 }

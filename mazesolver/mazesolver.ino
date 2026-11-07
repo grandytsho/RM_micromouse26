@@ -164,11 +164,11 @@ void rightWallFollow() {
   //Turn right
   if (!isWallRight()) {
     BT.println("NO RIGHT WALL");
-    centerUntilDistance(e,false);
+    centerUntilDistanceWallFollow(e);
     motorStop();
     delay(1);
     turn(-90.0f);
-    centerUntilDistance(a,false);
+    centerUntilDistanceWallFollow(a);
     delay(5);
   }
   //Drive forward using PID
@@ -185,7 +185,7 @@ void rightWallFollow() {
     delay(1);
     motorStop();
     turn(90.0f);
-    centerUntilDistance(a,false);
+    centerUntilDistanceWallFollow(a);
     delay(5);
   }
   //U-Turn
@@ -204,11 +204,11 @@ void leftWallFollow() {
   //Turn left
   if (!isWallLeft()) {
     BT.println("NO Left WALL|Left reading: "); BT.println(getCorrectedReading(3));
-    centerUntilDistance(e,false);
+    centerUntilDistanceWallFollow(e);
     motorStop();
     delay(1);
     turn(90.0f);
-    centerUntilDistance(a,false);
+    centerUntilDistanceWallFollow(a);
     delay(5);
   }
   //Drive forward using PID
@@ -227,7 +227,7 @@ void leftWallFollow() {
     motorStop(); 
     delay(5);
     turn(-90.0f);
-    centerUntilDistance(a,false);
+    centerUntilDistanceWallFollow(a);
     delay(5);
   }
   //U-Turn
