@@ -33,16 +33,16 @@ static float _approach_lastError = NAN;
 static float _approach_derivFilt = 0.0f;
 
 //centering and wall thresholds
-int LEFT_SETPOINT = 555;
-int LEFT_MAX = 860;
-int RIGHT_SETPOINT = 534;
-int RIGHT_MAX = 930;
+int LEFT_SETPOINT = 465;
+int LEFT_MAX = 858;
+int RIGHT_SETPOINT = 520;
+int RIGHT_MAX = 921;
 int LEFT_WALL_THRESHOLD = 317;
 int RIGHT_WALL_THRESHOLD = 330;
-int FRONT_WALL_DETECTION_THRESHOLD = 410;
-int FRONT2_WALL_DETECTION_THRESHOLD = 360;
-int FRONT_WALL_COLLISION_THRESHOLD = 495;
-int FRONT2_WALL_COLLISION_THRESHOLD = 525;
+int FRONT_WALL_DETECTION_THRESHOLD = 292;
+int FRONT2_WALL_DETECTION_THRESHOLD = 281;
+int FRONT_WALL_COLLISION_THRESHOLD = 374;
+int FRONT2_WALL_COLLISION_THRESHOLD = 388;
 
 int FRONT_MAX = 416;
 int FRONT2_MAX = 576;
@@ -51,13 +51,13 @@ static float _deriv_filtered = 0.0f;
 const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT / WHEEL_CIRCUMFERENCE;
 const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT / WHEEL_CIRCUMFERENCE;
 
-int MAX_BASE_SPEED = 140; // Cruising speed
+int MAX_BASE_SPEED = 150; // Cruising speed
 int MIN_BASE_SPEED_START =50;  // Minimum speed to overcome friction
 int MIN_BASE_SPEED_STOP =0;
 long ACCEL_TICKS = 300;   // How many ticks it takes to reach max speed
 long DECEL_TICKS = 600;   // How many ticks before target to start slowing down
 bool isStopped = true;
-
+float startYaw = 0.0f;
 
 bool wallFollower = false;
 
@@ -164,11 +164,11 @@ void turn(float angleDeg) {
   unsigned long lastTime = millis();
 
   // Fast read: 2ms timeout prevents blocking
-  float startYaw = getYaw(15);
+  
   delay(15);
 
-  // A positive angleDeg turns right, negative turns left
   targetYaw = startYaw + angleDeg;
+  startYaw += angleDeg;
 
   // STRICT NORMALIZATION: Wrap target directly to the IMU's native -180 to +180 range
   while (targetYaw > 180.0f) targetYaw -= 360.0f;
