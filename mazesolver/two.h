@@ -31,6 +31,7 @@ extern int MIN_BASE_SPEED;
 extern bool wallFollower;
 
 extern volatile float targetYaw;
+extern float startYaw; 
 
 void motorStop();
 void motor1Forward(int speed);
@@ -48,5 +49,7 @@ void centerUntilDistanceWallFollow(float dist);
 void centerUntilWall();
 void alignToFrontWall();
 void approachAndSquareUp(int rawFront, int rawFront2);
+float snapToNearest90(float angle);
+bool align(); 
 
 #endif

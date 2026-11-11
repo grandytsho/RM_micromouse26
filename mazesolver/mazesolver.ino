@@ -156,6 +156,10 @@ void loop() {
       }
     }
 
+    if(incomingChar == 'K'){
+      turn(0.0); 
+    }
+
   } 
 }
 

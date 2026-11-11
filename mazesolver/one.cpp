@@ -225,5 +225,8 @@ void inithardware(){
   bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 5000); 
   
   // Give the sensor a moment to settle before the main loop starts
-  delay(800); 
+  delay(800);
+
+  startYaw = getYaw(30); 
+  targetYaw = startYaw;
 }

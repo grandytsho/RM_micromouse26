@@ -141,6 +141,36 @@ bool isWallFrontCollision() {
   int FRONT_WALL_COLLISION_AVG = (FRONT_WALL_COLLISION_THRESHOLD + FRONT2_WALL_COLLISION_THRESHOLD) / 2;
   return (avg > FRONT_WALL_COLLISION_AVG);
 }
+
+bool align(){
+  float current = getYaw(15);
+  float nearest90 = snapToNearest90(current);
+
+  float errorFromGrid = current - nearest90;
+  while (errorFromGrid > 180.0f) errorFromGrid -= 360.0f;
+  while (errorFromGrid <= -180.0f) errorFromGrid += 360.0f;
+
+  if(fabs(errorFromGrid) > 3.0f){
+    turn(0.0);
+    return true;  
+  }else{
+    return false; 
+  }
+}
+
+float snapToNearest90(float angle) {
+  float rel = angle - startYaw;
+  while (rel > 180.0f) rel -= 360.0f;
+  while (rel <= -180.0f) rel += 360.0f;
+
+  float snappedRel = roundf(rel / 90.0f) * 90.0f;
+
+  float snappedGlobal = startYaw + snappedRel;
+  while (snappedGlobal > 180.0f) snappedGlobal -= 360.0f;
+  while (snappedGlobal <= -180.0f) snappedGlobal += 360.0f;
+
+  return snappedGlobal;
+}
 void turn(float angleDeg) {
   const int upper = 110;
   const int lower = 60;
@@ -167,8 +197,11 @@ void turn(float angleDeg) {
   
   delay(15);
 
-  targetYaw = startYaw + angleDeg;
-  startYaw += angleDeg;
+  if (fabsf(angleDeg) < 1.0f) {
+    targetYaw = snapToNearest90(getYaw(15));
+  } else {
+    targetYaw = snapToNearest90(targetYaw + angleDeg);
+  }
 
   // STRICT NORMALIZATION: Wrap target directly to the IMU's native -180 to +180 range
   while (targetYaw > 180.0f) targetYaw -= 360.0f;
@@ -394,7 +427,11 @@ void centerUntilDistance(float dist, bool stopAtEnd = true) {
     }
     delay(2);
   }
-
+  if(align()){
+    BT.println("Aligned to nearest 90"); 
+  }else{
+    BT.println("Alignment not needed"); 
+  }
 }
 
 void centerUntilWall() {
