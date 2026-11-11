@@ -1,19 +1,19 @@
 #include <vector>
 #include "floodFill.h"
 
-float distance = 24; 
+float distance = 25; 
 
-int cur_x = 1; 
-int cur_y = 5;
-int start_x = 1; 
-int start_y = 5; 
+int cur_x = 7; 
+int cur_y = 0; 
+int start_x = 7; 
+int start_y = 0; 
 
-int goal_x = 2; 
-int goal_y = 1; 
+int goal_x = 3; 
+int goal_y = 3;
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
-heading current_heading = East;
+heading current_heading = North;
 bool returning_to_start = false;
 int cells_visited = 0;
 int times_moved = 0;
@@ -220,7 +220,7 @@ void mousemove() {
     turnTo(target_heading);
     
 
-    centerUntilDistance(distance);
+    centerUntilDistance(distance,true);
     times_moved++; 
     
     if (current_heading == North) cur_y++;
@@ -350,7 +350,7 @@ void moveNormal(std::vector<int> path) {
     for(size_t i = 0; i < path.size(); i++){
         turnTo(path[i]); 
         current_heading = (heading)path[i]; 
-        centerUntilDistance(distance); 
+        centerUntilDistance(distance,true); 
     }
 }
 
@@ -366,11 +366,10 @@ void moveFast(std::vector<int> path){
     }
     if(current_path_heading != current_heading){
     turnTo(current_path_heading);}
-    float total_distance = distance*number_of_same_headings; 
-    centerUntilDistance(total_distance); 
-
-    i++; 
-
+    float total_distance = distance*number_of_same_headings - 2;
+    BT.print("Moving distance: "); BT.println(total_distance); 
+    centerUntilDistance(total_distance, true); 
+    i++;
     }
 }
 
@@ -403,7 +402,7 @@ int executeFloodFill() {
     int currentButtonPress = runmodeButtonPressCount;
 
 
-    turnTo(East);
+    turnTo(North);
 
 
     BT.println("Press Run mode again to start the bot"); 
@@ -416,8 +415,8 @@ int executeFloodFill() {
     }
     delay(500);
     BT.println("Starting final optimized speedrun run...");
-    BASE_SPEED = BASE_SPEED+70;
-    moveFast(path); 
+    MAX_BASE_SPEED = 170;
+    moveFast(path);
     BT.println("Final speedrun moves taken: " + String(times_moved));
     calculateCost(path); 
 

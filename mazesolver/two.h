@@ -23,13 +23,14 @@ extern int RIGHT_MAX;
 extern int LEFT_WALL_THRESHOLD;  
 extern int RIGHT_WALL_THRESHOLD;
 extern int TURN_THRESHOLD;
+extern int FRONT_WALL_COLLISION_THRESHOLD;
+extern int FRONT2_WALL_COLLISION_THRESHOLD;
 
-extern int BASE_SPEED;
+extern int MAX_BASE_SPEED;
+extern int MIN_BASE_SPEED;  
 extern bool wallFollower;
 
 extern volatile float targetYaw;
-
-extern float turnThreshold;   
 
 void motorStop();
 void motor1Forward(int speed);
@@ -41,11 +42,11 @@ bool isWallRight();
 bool isWallFront();
 bool isWallFrontCollision();
 void turn(float angleDeg);
-void applyPIDCentering(int rawLeft, int rawRight);
-void centerUntilDistance(float dist);
+void applyPIDCentering(int rawLeft, int rawRight, int currentBaseSpeed = 120);
+void centerUntilDistance(float dist, bool stopAtEnd = true);
+void centerUntilDistanceWallFollow(float dist);
 void centerUntilWall();
 void alignToFrontWall();
 void approachAndSquareUp(int rawFront, int rawFront2);
-void uTurnAndAlign(); 
 
 #endif

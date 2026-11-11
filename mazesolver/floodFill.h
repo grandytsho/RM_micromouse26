@@ -10,7 +10,7 @@
 
 extern float distance;
 
-const int MAZE_SIZE = 6;
+const int MAZE_SIZE = 8;
 const int straight_cost = 1; 
 const int turn_cost = 2; 
 
@@ -69,4 +69,3 @@ std::vector<int> getAStarPath(Cell maze[MAZE_SIZE][MAZE_SIZE]);
 void moveNormal(std::vector<int> path);
 void moveFast(std::vector<int> path);
 int executeFloodFill();
-

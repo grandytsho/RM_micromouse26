@@ -22,7 +22,7 @@ const char* sensorNames[NUM_SENSORS] = {
   "Front 2   "  // Sens: 38, Emit: 39
 };
 
-volatile int algoButtonPressCount = -1;
+volatile int algoButtonPressCount = 1;
 volatile int runmodeButtonPressCount = 0;
 volatile int currentModeButtonCount = 0;
 
@@ -44,7 +44,7 @@ volatile bool stateChanged = false;
 const uint8_t STATE_HC_05 = 6; 
 
 const double MOTOR_BIAS = (127.0+15.0)/127.0;
-const double MOTOR_BIAS_TURN = 0.97; 
+const double MOTOR_BIAS_TURN = 0.9383; 
 volatile long leftEncoderTicks = 0;
 volatile long rightEncoderTicks = 0;
 const uint8_t IMU_RESET_PIN = 11;
@@ -53,14 +53,14 @@ sh2_SensorValue_t sensorValue;
 
 float currentYaw = 0.0f;
 const float WHEEL_DIAMETER = 3.4f;
-const float TICKS_PER_REVOLUTION_LEFT = 745.0f;
-const float TICKS_PER_REVOLUTION_RIGHT = 745.0f; 
+const float TICKS_PER_REVOLUTION_LEFT = 743.0f;
+const float TICKS_PER_REVOLUTION_RIGHT = 737.0f; 
 const float WHEEL_CIRCUMFERENCE = WHEEL_DIAMETER*M_PI;
 const float TICKS_PER_CM_LEFT = TICKS_PER_REVOLUTION_LEFT/WHEEL_CIRCUMFERENCE;
 const float TICKS_PER_CM_RIGHT = TICKS_PER_REVOLUTION_RIGHT/WHEEL_CIRCUMFERENCE;
 
 void isrLeftEncoder() {
-    if (digitalReadFast(EC_1A) == digitalReadFast(EC_1B)) {
+    if (digitalRead(EC_1A) == digitalRead(EC_1B)) {
         leftEncoderTicks--;
     } else {
         leftEncoderTicks++;
@@ -68,7 +68,7 @@ void isrLeftEncoder() {
 }
 
 void isrRightEncoder() {
-    if (digitalReadFast(EC_2A) != digitalReadFast(EC_2B)) {
+    if (digitalRead(EC_2A) != digitalRead(EC_2B)) {
         rightEncoderTicks--;
     } else {
         rightEncoderTicks++;
@@ -77,8 +77,10 @@ void isrRightEncoder() {
 
 float getYaw(uint16_t timeoutMs = 15) {
     unsigned long start = millis();
+    bool updated = false;
+    
     while ((millis() - start) < timeoutMs) {
-        if (bno08x.getSensorEvent(&sensorValue)) {
+        while (bno08x.getSensorEvent(&sensorValue)) {
             if (sensorValue.sensorId == SH2_GAME_ROTATION_VECTOR) {
                 float qr = sensorValue.un.gameRotationVector.real;
                 float qi = sensorValue.un.gameRotationVector.i;
@@ -90,9 +92,10 @@ float getYaw(uint16_t timeoutMs = 15) {
                     1.0f - 2.0f * (sq(qj) + sq(qk))
                 );
                 currentYaw = yaw_rad * (180.0f / PI);
-                return currentYaw;  
+                updated = true; 
             }
         }
+        if (updated) return currentYaw;
     }
     return currentYaw;  
 }
@@ -219,7 +222,7 @@ void inithardware(){
   BT.println("IMU working");
   
   // Enable the missing data stream! (2500us = 400Hz refresh rate)
-  bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 2500); 
+  bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 5000); 
   
   // Give the sensor a moment to settle before the main loop starts
   delay(800); 

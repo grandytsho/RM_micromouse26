@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-int a=9, e =11;
+int a=10, e =12;
 bool  has_started = false; 
 void rightWallFollow();
 void leftWallFollow();
@@ -13,24 +13,33 @@ void leftWallFollow();
 void setup() {
   inithardware();
   BT.print("available");
+  delay(2000);
 }
 
+// void loop(){
+//   BT.println(getYaw(15));
+//   delay(100);
+
+// }
 void loop() {
+  // Only execute if data is waiting in the hardware buffer
   if (BT.available() > 0) {
     char incomingChar = BT.read();
-    BT.println(incomingChar);
-    //Ignore stray invisible characters from the Serial Monitor
+    
+    // Ignore stray invisible characters from the Serial Monitor
     if (incomingChar == '\n' || incomingChar == '\r') {
       return; 
     }
     
-    BT.print(incomingChar);
+    // Echo the character back to confirm receipt
+    BT.print("Received: ");
+    BT.println(incomingChar);
 
     if (incomingChar == 'f') {
       BT.print("\nEnter distance value: ");
       while(BT.available() == 0){delay(1);}
-      float dist = BT.parseFloat(); 
-      centerUntilDistance(dist);
+      distance = BT.parseFloat(); 
+      centerUntilDistance(distance);
     }
     
     if (incomingChar == 'Y') {
@@ -38,19 +47,19 @@ void loop() {
     }
     
     if (incomingChar == 'p') {
-      BT.print("\nEnter KP turn value: ");
+      BT.print("\nEnter KP  value: ");
       while (BT.available() == 0) { delay(1); }
-      Kp_turn= BT.parseFloat(); 
-      BT.print("\nKP turn value: "); 
-      BT.println(Kp_turn);
+      Kp= BT.parseFloat(); 
+      BT.print("\nKP  value: "); 
+      BT.println(Kp);
     }
     
     if (incomingChar == 'd') {
-      BT.print("\nEnter KD turn value: "); 
+      BT.print("\nEnter KD value: "); 
       while (BT.available() == 0) { delay(1); }
-      Kd_turn = BT.parseFloat(); 
-      BT.print("\nKD turn value: "); 
-      BT.println(Kd_turn);
+      Kd = BT.parseFloat(); 
+      BT.print("\nKD value: "); 
+      BT.println(Kd);
     }
 
     if (incomingChar == 'i') {
@@ -74,11 +83,7 @@ void loop() {
       turn(-90);
     }
     if (incomingChar == 'z') {
-      BT.print("\nEnter turn threshold value: ");
-      while(BT.available() == 0){delay(1);}
-      turnThreshold = BT.parseFloat();
-      BT.print("\turn threshold  value: ");
-      BT.println(turnThreshold);
+      turn(90);
     }
     if(incomingChar == 'r'){
       while(true){
@@ -101,12 +106,12 @@ void loop() {
     if(incomingChar == 'b'){
       BT.print("\nEnter base speed: "); 
       while (BT.available() == 0) { delay(1); }
-      BASE_SPEED = BT.parseInt();
+      MAX_BASE_SPEED = BT.parseInt();
       BT.print("\nBase Speed: ");
-      BT.println(BASE_SPEED);
+      BT.println(MAX_BASE_SPEED);
     }
     if(incomingChar == 'e'){
-      BT.print("\n e value(13)"); 
+      BT.print("\n e value:(12)"); 
       while (BT.available() == 0) { delay(1); }
       e = BT.parseInt();
       BT.print("\ne val: ");
@@ -135,53 +140,36 @@ void loop() {
       goal_y = BT.parseInt(); 
       BT.print("Goal Y: "); BT.println(goal_y); 
     }
-  } // <-- This brace closes the if(BT.available() > 0) statement
+
+    if(incomingChar == 'S'){
+      // Sensor dump: front readings vs collision threshold
+      for(int k = 0; k < 5; k++){
+        int f1 = getCorrectedReadingAvg(0);
+        int f2 = getCorrectedReadingAvg(5);
+        BT.print("F1: "); BT.print(f1);
+        BT.print(" | F2: "); BT.print(f2);
+        BT.print(" | avg: "); BT.print((f1 + f2) / 2);
+        BT.print(" | collision thr avg: "); BT.print((FRONT_WALL_COLLISION_THRESHOLD + FRONT2_WALL_COLLISION_THRESHOLD) / 2);
+        BT.print(" | L: "); BT.print((int)getCorrectedReadingAvg(3));
+        BT.print(" | R: "); BT.println((int)getCorrectedReadingAvg(1));
+        delay(200);
+      }
+    }
+
+  } 
 }
 
-
-// static int lastRunmodePresses = runmodeButtonPressCount; 
-
-// void loop() {
-  
-//   if (lastRunmodePresses != runmodeButtonPressCount) {
-//     lastRunmodePresses = runmodeButtonPressCount; 
-//     has_started = true; 
-//     BT.println("Starting Algorithm!");
-//   }
-
-  
-//   if (has_started) {
-//     if (algoButtonPressCount == 0) {
-//       wallFollower = false;
-//       executeFloodFill();  
-//       has_started = false;
-//       lastRunmodePresses = runmodeButtonPressCount; 
-//     }
-//     else if (algoButtonPressCount == 1) {
-//       wallFollower = true;
-//       while(true)
-//         leftWallFollow();
-//     }
-//     else if (algoButtonPressCount == 2) {
-//       wallFollower = true;
-//       while(true)
-//         rightWallFollow();
-//     }
-//   }
-// }
 
 void rightWallFollow() { 
   //Turn right
   if (!isWallRight()) {
     BT.println("NO RIGHT WALL");
-    // motorStop();
-    // delay(1000);
-    centerUntilDistance(e);
+    centerUntilDistanceWallFollow(e);
     motorStop();
     delay(1);
     turn(-90.0f);
-    centerUntilDistance(a);
-    delay(1);
+    centerUntilDistanceWallFollow(a);
+    delay(5);
   }
   //Drive forward using PID
   else if (!isWallFrontCollision()) {
@@ -194,40 +182,34 @@ void rightWallFollow() {
     BT.println("turning Left");
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
-    //centerUntilDistance(2);
     delay(1);
+    motorStop();
     turn(90.0f);
-    centerUntilDistance(a);
-    delay(1);
+    centerUntilDistanceWallFollow(a);
+    delay(5);
   }
   //U-Turn
   else {
     BT.println("dead end, U-turn");
     motorStop();
     delay(1);
-    // uTurnAndAlign();
-    turn(180.0f); 
+    turn(180.0f);
     delay(1);
   }
   
-  delay(1);
-  // BT.print("Right:");BT.println(isWallRight());
-  // BT.print("Left:");BT.println(isWallLeft());
-  // BT.print("Front:");BT.println(isWallFront());
+  delay(5);
 }
 
 void leftWallFollow() { 
   //Turn left
   if (!isWallLeft()) {
     BT.println("NO Left WALL|Left reading: "); BT.println(getCorrectedReading(3));
-    // motorStop();
-    // delay(1000);
-    centerUntilDistance(e);
+    centerUntilDistanceWallFollow(e);
     motorStop();
     delay(1);
     turn(90.0f);
-    centerUntilDistance(a);
-    delay(1);
+    centerUntilDistanceWallFollow(a);
+    delay(5);
   }
   //Drive forward using PID
   else if (!isWallFrontCollision()) {
@@ -242,11 +224,11 @@ void leftWallFollow() {
     BT.println("turning Right");
     BT.print("Front1: ");BT.println(getCorrectedReading(5));
     BT.print("Front2: ");BT.println(getCorrectedReading(0));
-    //centerUntilDistance(2); 
-    delay(1);
+    motorStop(); 
+    delay(5);
     turn(-90.0f);
-    centerUntilDistance(a);
-    delay(1);
+    centerUntilDistanceWallFollow(a);
+    delay(5);
   }
   //U-Turn
   else {
@@ -254,13 +236,9 @@ void leftWallFollow() {
     BT.print("Front1: ");BT.println(getCorrectedReading(5)); 
     BT.print("Front2: ");BT.println(getCorrectedReading(0)); 
     motorStop();
-    delay(1);
-    // uTurnAndAlign();
-    turn(180.0f); 
-    delay(1);
+    delay(5);
+    turn(180.0f);
+    delay(5);
   }
-  delay(1);
-  // BT.print("Right:");BT.println(isWallRight());
-  // BT.print("Left:");BT.println(isWallLeft());
-  // BT.print("Front:");BT.println(isWallFront());
+  delay(5);
 }
