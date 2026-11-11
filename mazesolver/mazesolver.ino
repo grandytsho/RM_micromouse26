@@ -194,7 +194,7 @@ void rightWallFollow() {
     motorStop();
     delay(1);
     turn(180.0f);
-    delay(1);
+    delay(1); 
   }
   
   delay(5);

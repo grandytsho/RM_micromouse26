@@ -1,15 +1,15 @@
 #include <vector>
 #include "floodFill.h"
 
-float distance = 25; 
+float distance = 24; 
 
 int cur_x = 7; 
 int cur_y = 0; 
 int start_x = 7; 
 int start_y = 0; 
 
-int goal_x = 3; 
-int goal_y = 3;
+int goal_x = 6; 
+int goal_y = 7; 
 
 Cell maze[MAZE_SIZE][MAZE_SIZE]; 
 Cell copy_maze[MAZE_SIZE][MAZE_SIZE]; 
@@ -26,7 +26,8 @@ void turnTo(int target_heading) {
     } else if (diff == -1 || diff == 3) {
         turn(90.0f);  
     } else if (diff == 2 || diff == -2) {
-        turn(180.0f); 
+        turn(180.0f);
+        centerUntilDistance(2); 
     }
     current_heading = (heading)target_heading;
 }
@@ -401,6 +402,7 @@ int executeFloodFill() {
 
     int currentButtonPress = runmodeButtonPressCount;
 
+    distance = 25; 
 
     turnTo(North);
 
@@ -415,8 +417,10 @@ int executeFloodFill() {
     }
     delay(500);
     BT.println("Starting final optimized speedrun run...");
+
     MAX_BASE_SPEED = 170;
     moveFast(path);
+
     BT.println("Final speedrun moves taken: " + String(times_moved));
     calculateCost(path); 
 
